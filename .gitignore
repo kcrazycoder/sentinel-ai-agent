@@ -1,3 +1,6 @@
+# Google Cloud
+sentinel-ai-*.json
+
 # Python
 __pycache__/
 *.py[cod]
