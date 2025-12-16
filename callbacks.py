@@ -4,7 +4,10 @@ from langchain_core.outputs import LLMResult
 from langchain_core.agents import AgentAction, AgentFinish
 import logging
 from ddtrace import tracer
-from textblob import TextBlob
+try:
+    from textblob import TextBlob
+except ImportError:
+    TextBlob = None
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,10 @@ class DatadogCallbackHandler(BaseCallbackHandler):
         
         # Calculate Sentiment (Social Engineering Detection)
         try:
-            sentiment = TextBlob(prompts[0]).sentiment.polarity
+            if TextBlob:
+                sentiment = TextBlob(prompts[0]).sentiment.polarity
+            else:
+                sentiment = 0.0
             self.current_span.set_metric("ai.agent.sentiment", sentiment)
             if sentiment < -0.5:
                 logger.warning(f"NEGATIVE SENTIMENT DETECTED: {sentiment}")
