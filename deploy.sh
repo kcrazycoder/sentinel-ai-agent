@@ -52,6 +52,7 @@ echo "Generating service.yaml from template..."
 export DD_SERVICE=${SERVICE_NAME}
 export DD_ENV=${DD_ENV:-production}
 export DD_VERSION=${DD_VERSION:-1.0.0}
+export DD_VERSION_LABEL=$(echo "$DD_VERSION" | tr '.' '-')
 export DD_LOGS_INJECTION="true"
 export IMAGE_URL="gcr.io/$PROJECT_ID/$SERVICE_NAME"
 export PROJECT_ID=$PROJECT_ID
