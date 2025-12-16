@@ -34,16 +34,7 @@ spec:
         - name: DD_VERSION
           value: "${DD_VERSION}"
         - name: DD_LOGS_INJECTION
-          value: "${DD_LOGS_INJECTION}"
-        # Application specific env vars from .env will need to be injected or mapped here 
-        # For simplicity in this template we assume generic env injection or selective mapping in the script
-        # Using the concatenated ENV_VARS approach from the script is tricky in YAML without a tool like kustomize or heavy envsubst.
-        # We will use envsubst for the main vars.
-        # Note: We will inject the LONG string of other vars as a block in the script before envsubst? 
-        # Or simpler: Just rely on the script to generate this file fully or use --set-env-vars with 'gcloud run deploy' which SUPPORTS sidecars in beta
-        # Actually, 'gcloud run deploy --container ...' is complex. YAML is better.
-        # Let's assume the script replaces ${APP_ENV_VARS_BLOCK} with the formatted yaml list.
-${APP_ENV_VARS_BLOCK}
+          value: "${DD_LOGS_INJECTION}"${APP_ENV_VARS_BLOCK}
             
       - image: gcr.io/datadoghq/agent:latest
         name: datadog-agent
