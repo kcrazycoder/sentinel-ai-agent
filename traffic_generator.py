@@ -2,7 +2,7 @@ import requests
 import time
 import random
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "https://sentinel-ai-967479678472.us-central1.run.app"
 
 SCENARIOS = [
     # Scenario 1: Good User (Information Seeking)
