@@ -45,17 +45,58 @@ if [ $? -ne 0 ]; then
 fi
 
 # Deploy
-echo "Deploying to Cloud Run..."
-# Note: We are using allow-unauthenticated for the Hackathon "public url" requirement.
-# Change to --no-allow-unauthenticated for private services.
+# Generate service.yaml
+echo "Generating service.yaml from template..."
 
-gcloud run deploy "$SERVICE_NAME" \
-  --image "gcr.io/$PROJECT_ID/$SERVICE_NAME" \
-  --platform managed \
-  --region "$REGION" \
-  --allow-unauthenticated \
-  --port 8080 \
-  --set-env-vars "DD_LLMOBS_ENABLED=1,DD_LLMOBS_ML_APP=sentinel-ai-agent,$(grep -v '^#' .env | grep -v 'GOOGLE_APPLICATION_CREDENTIALS' | tr '\n' ',' | sed 's/,$//')"
+# Load APM vars or defaults
+export DD_SERVICE=${SERVICE_NAME}
+export DD_ENV=${DD_ENV:-production}
+export DD_VERSION=${DD_VERSION:-1.0.0}
+export DD_LOGS_INJECTION="true"
+export IMAGE_URL="gcr.io/$PROJECT_ID/$SERVICE_NAME"
+export PROJECT_ID=$PROJECT_ID
+export SERVICE_NAME=$SERVICE_NAME
+
+# Load keys from .env
+if [ -f .env ]; then
+  # Sourcing .env is risky if it has comments/spaces, but typical for simple envs.
+  # Better: Read key-by-key for known keys.
+  export DD_API_KEY=$(grep -v '^#' .env | grep 'DD_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+  export DD_SITE=$(grep -v '^#' .env | grep 'DD_SITE' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+  
+  # Format remaining env vars as YAML list items for the APP container
+  # Excluding the ones we already handled explicitly
+  APP_ENV_VARS_BLOCK=""
+  while IFS='=' read -r key value; do
+    if [[ $key =~ ^#.* ]] || [[ -z $key ]]; then continue; fi
+    # Skip items we handled or don't want (Credentials handled by Identity)
+    if [[ "$key" == "GOOGLE_APPLICATION_CREDENTIALS" ]] || \
+       [[ "$key" == "DD_API_KEY" ]] || [[ "$key" == "DD_SITE" ]] || \
+       [[ "$key" == "project_id" ]]; then
+       continue
+    fi
+    # Clean value
+    val=$(echo "$value" | tr -d '"' | tr -d "'")
+    APP_ENV_VARS_BLOCK="${APP_ENV_VARS_BLOCK}$(printf "\n        - name: %s\n          value: \"%s\"" "$key" "$val")"
+  done < .env
+  export APP_ENV_VARS_BLOCK
+fi
+
+
+# Use envsubst to replace variables in template
+# We need strictly the variables we defined to be replaced, to avoid accidental replacement if user has $ in file
+# But simple envsubst is usually fine for this template.
+envsubst < service.yaml.template > service.yaml
+
+# Deploy
+echo "Deploying to Cloud Run using service.yaml..."
+gcloud run services replace service.yaml --region "$REGION"
+
+# Allow unauthenticated (since 'replace' might reset permissions or strict default)
+gcloud run services add-iam-policy-binding "$SERVICE_NAME" \
+  --region="$REGION" \
+  --member="allUsers" \
+  --role="roles/run.invoker"
 
 # Note on Credentials:
 # Cloud Run uses the Default Service Account by default.

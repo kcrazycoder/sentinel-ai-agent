@@ -1,0 +1,63 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ${SERVICE_NAME}
+  labels:
+    cloud.googleapis.com/location: ${REGION}
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+      labels:
+        env: ${DD_ENV}
+        service: ${DD_SERVICE}
+        version: ${DD_VERSION}
+    spec:
+      containers:
+      - image: ${IMAGE_URL}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GOOGLE_CLOUD_PROJECT
+          value: ${PROJECT_ID}
+        - name: DD_AGENT_HOST
+          value: "localhost"
+        - name: DD_TRACE_AGENT_PORT
+          value: "8126"
+        - name: DD_SERVICE
+          value: "${DD_SERVICE}"
+        - name: DD_ENV
+          value: "${DD_ENV}"
+        - name: DD_VERSION
+          value: "${DD_VERSION}"
+        - name: DD_LOGS_INJECTION
+          value: "${DD_LOGS_INJECTION}"
+        # Application specific env vars from .env will need to be injected or mapped here 
+        # For simplicity in this template we assume generic env injection or selective mapping in the script
+        # Using the concatenated ENV_VARS approach from the script is tricky in YAML without a tool like kustomize or heavy envsubst.
+        # We will use envsubst for the main vars.
+        # Note: We will inject the LONG string of other vars as a block in the script before envsubst? 
+        # Or simpler: Just rely on the script to generate this file fully or use --set-env-vars with 'gcloud run deploy' which SUPPORTS sidecars in beta
+        # Actually, 'gcloud run deploy --container ...' is complex. YAML is better.
+        # Let's assume the script replaces ${APP_ENV_VARS_BLOCK} with the formatted yaml list.
+${APP_ENV_VARS_BLOCK}
+            
+      - image: gcr.io/datadoghq/agent:latest
+        name: datadog-agent
+        env:
+        - name: DD_API_KEY
+          value: "${DD_API_KEY}"
+        - name: DD_SITE
+          value: "${DD_SITE}"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_APM_NON_LOCAL_TRAFFIC
+          value: "true"
+        - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+          value: "true"
+        resources:
+          limits:
+            memory: 512Mi
