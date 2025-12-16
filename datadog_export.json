@@ -1,0 +1,64 @@
+{
+    "monitors": [
+        {
+            "name": "[SentinelAI] Social Engineering Attack Detected",
+            "type": "metric alert",
+            "query": "avg(last_5m):avg:ai.agent.sentiment{service:sentinel-ai-agent} < -0.7",
+            "message": "User sentiment is dangerously negative. Possible manipulation attempt. @webhook-SentinelKillSwitch",
+            "tags": [
+                "service:sentinel-ai-agent",
+                "type:security"
+            ],
+            "options": {
+                "thresholds": {
+                    "critical": -0.7
+                }
+            }
+        },
+        {
+            "name": "[SentinelAI] Rogue Agent Alert (Dangerous Tool)",
+            "type": "log alert",
+            "query": "logs(\"service:sentinel-ai-agent status:warn \\\"RISK DETECTED\\\"\").index(\"*\").rollup(\"count\").last(\"5m\") > 0",
+            "message": "The agent attempted to use a prohibited tool (e.g. DELETE). Intervention required. @pagerduty",
+            "tags": [
+                "service:sentinel-ai-agent",
+                "type:risk"
+            ],
+            "options": {
+                "thresholds": {
+                    "critical": 0
+                }
+            }
+        }
+    ],
+    "dashboards": [
+        {
+            "title": "SentinelAI: Agent Overseer",
+            "description": "Real-time visibility into Agent reasoning, sentiment, and risks.",
+            "widgets": [
+                {
+                    "definition": {
+                        "title": "Agent Sentiment (Real-time)",
+                        "type": "timeseries",
+                        "requests": [
+                            {
+                                "q": "avg:ai.agent.sentiment{service:sentinel-ai-agent}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "definition": {
+                        "title": "Risk Signals (Dangerous Tools)",
+                        "type": "query_value",
+                        "requests": [
+                            {
+                                "q": "logs(\"service:sentinel-ai-agent status:warn \\\"RISK DETECTED\\\"\").index(\"*\").rollup(\"count\").last(\"1h\")"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
