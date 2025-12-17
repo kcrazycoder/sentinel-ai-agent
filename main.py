@@ -80,6 +80,9 @@ async def chat_endpoint(request: ChatRequest):
         return {"response": response_text}
     except Exception as e:
         logger.error(f"Agent failed: {e}")
+        error_str = str(e)
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+             raise HTTPException(status_code=429, detail="Upstream LLM Rate Limit Exceeded. Please retry later.")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/webhook/suspend")

@@ -28,7 +28,7 @@ def build_agent():
     llm = ChatGoogleGenerativeAI(
         model=model_name,
         temperature=0,
-        max_retries=1, 
+        max_retries=3, 
         timeout=600
     )
 
