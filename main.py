@@ -76,6 +76,7 @@ async def chat_endpoint(request: ChatRequest):
         # Extract the last message content
         last_message = result["messages"][-1]
         response_text = last_message.content
+        logger.info(f"Agent Response: {response_text}")
         
         return {"response": response_text}
     except Exception as e:
