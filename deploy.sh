@@ -75,7 +75,10 @@ if [ -f .env ]; then
     # Skip items we handled or don't want (Credentials handled by Identity)
     if [[ "$key" == "GOOGLE_APPLICATION_CREDENTIALS" ]] || \
        [[ "$key" == "DD_API_KEY" ]] || [[ "$key" == "DD_SITE" ]] || \
-       [[ "$key" == "project_id" ]]; then
+       [[ "$key" == "project_id" ]] || [[ "$key" == "DD_SERVICE" ]] || \
+       [[ "$key" == "DD_ENV" ]] || [[ "$key" == "DD_VERSION" ]] || \
+       [[ "$key" == "DD_LOGS_INJECTION" ]] || [[ "$key" == "DD_LLMOBS_ENABLED" ]] || \
+       [[ "$key" == "DD_LLMOBS_ML_APP" ]] || [[ "$key" == "DD_APP_KEY" ]]; then
        continue
     fi
     # Clean value
