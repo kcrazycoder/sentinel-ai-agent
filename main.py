@@ -9,6 +9,7 @@ load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from ddtrace import tracer
 
 # Initialize Datadog Tracing (Handled by ddtrace-run in Dockerfile)
 # from ddtrace import patch_all
@@ -76,6 +77,16 @@ async def chat_endpoint(request: ChatRequest):
         # Extract the last message content
         last_message = result["messages"][-1]
         response_text = last_message.content
+        
+        # Custom Security Instrumentation:
+        # If the agent executed the dangerous 'delete_database' tool, mark this trace as an Error/Security Event
+        if "SIMULATED: Table" in response_text or "has been deleted" in response_text:
+             logger.warning("Security Event Detected: Database deletion attempt!")
+             current_span = tracer.current_root_span()
+             if current_span:
+                 current_span.set_tag("error.msg", "Security Risk: Unauthorized DB Access Attempt")
+                 current_span.set_tag("error.type", "SecurityViolation")
+                 current_span.error = 1
         
         return {"response": response_text}
     except Exception as e:
