@@ -73,10 +73,19 @@ async def chat_endpoint(request: ChatRequest):
         
         result = await agent_executor.ainvoke(inputs, config=config)
         
-        # Extract the last message content
-        last_message = result["messages"][-1]
         response_text = last_message.content
         logger.info(f"Agent Response: {response_text}")
+
+        # Custom Observability: Tag Refusals on the Span (since Logs are disabled)
+        try:
+            from ddtrace import tracer
+            current_span = tracer.current_span()
+            if current_span:
+                # Simple keyword matching for safety refusals
+                if any(phrase in response_text.lower() for phrase in ["cannot fulfill", "dangerous", "prohibited", "illegal"]):
+                    current_span.set_tag("sentinel.refusal", "true")
+        except ImportError:
+            pass
         
         return {"response": response_text}
     except Exception as e:
