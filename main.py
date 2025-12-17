@@ -10,9 +10,9 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# Initialize Datadog Tracing (Auto-instrumentation happens via ddtrace-run or patch)
-from ddtrace import patch_all
-patch_all()
+# Initialize Datadog Tracing (Handled by ddtrace-run in Dockerfile)
+# from ddtrace import patch_all
+# patch_all()
 
 # Configure Logging
 # Using simplified format as requested by user
