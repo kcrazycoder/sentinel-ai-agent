@@ -34,7 +34,11 @@ spec:
         - name: DD_VERSION
           value: "${DD_VERSION}"
         - name: DD_LOGS_INJECTION
-          value: "${DD_LOGS_INJECTION}"${APP_ENV_VARS_BLOCK}
+          value: "${DD_LOGS_INJECTION}"
+        - name: DD_LLMOBS_ENABLED
+          value: "${DD_LLMOBS_ENABLED}"
+        - name: DD_LLMOBS_ML_APP
+          value: "${DD_LLMOBS_ML_APP}"${APP_ENV_VARS_BLOCK}
             
       - image: gcr.io/datadoghq/agent:latest
         name: datadog-agent
