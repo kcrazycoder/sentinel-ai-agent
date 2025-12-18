@@ -73,6 +73,7 @@ async def chat_endpoint(request: ChatRequest):
         
         result = await agent_executor.ainvoke(inputs, config=config)
         
+        last_message = result['messages'][-1]
         response_text = last_message.content
         logger.info(f"Agent Response: {response_text}")
 
