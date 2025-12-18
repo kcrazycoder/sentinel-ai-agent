@@ -1,0 +1,24 @@
+{
+    "id": 17125093,
+    "name": "[SentinelAI] Critical Tool Usage (delete_database)",
+    "type": "llm-observability alert",
+    "query": "llm-observability(\"@event_type:span @ml_app:sentinel-ai @name:delete_database\").rollup(\"count\").last(\"5m\") > 0",
+    "message": "{{#is_alert}}\n# ⚠️ CRITICAL SECURITY ALERT: Dangerous Tool Usage\n\nThe `delete_database` tool was executed by the SentinelAI agent.\n\n**Context:**\n- **Service:** {{service.name}}\n- **Time:** {{last_triggered_at}}\n- **Trace ID:** {{trace.id}}\n\n**Immediate Action Required:**\n1. Review the trace in [LLM Observability](https://app.datadoghq.com/llm/traces) to see the user prompt that triggered this.\n2. Verify if this was a legitimate administrative action or a prompt injection attack.\n3. If malicious, allow-list the user ID or refine the System Prompt.\n\n@pagerduty-sentinel-security\n{{/is_alert}}\n\n{{#is_alert_recovery}}\n# ✅ RECOVERY: High-Risk Activity Ceased\n\nThe usage spike for `delete_database` has returned to zero. \n\n**Summary:**\n- **Duration:** {{duration}}\n- **Trace ID:** {{trace.id}}\n\nPlease still conduct a post-mortem on the triggered event.\n{{/is_alert_recovery}}",
+    "tags": [
+        "service:sentinel-ai",
+        "type:activity"
+    ],
+    "options": {
+        "thresholds": {
+            "critical": 0
+        },
+        "enable_logs_sample": false,
+        "notify_audit": false,
+        "on_missing_data": "default",
+        "include_tags": true,
+        "new_host_delay": 300,
+        "groupby_simple_monitor": false
+    },
+    "priority": null,
+    "draft_status": "published"
+}

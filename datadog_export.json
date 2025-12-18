@@ -1,28 +1,30 @@
 {
     "monitors": [
         {
-            "name": "[SentinelAI] Social Engineering Attack Detected",
-            "type": "metric alert",
-            "query": "avg(last_5m):avg:ai.agent.sentiment{service:sentinel-ai-agent} < -0.7",
-            "message": "User sentiment is dangerously negative. Possible manipulation attempt. @webhook-SentinelKillSwitch",
+            "name": "[SentinelAI] Critical Tool Usage (Delete Database)",
+            "type": "llm-observability alert",
+            "query": "llm-observability(\"@event_type:span @ml_app:sentinel-ai @resource:delete_database\").rollup(\"count\").last(\"5m\") > 0",
+            "message": "CRITICAL: The 'delete_database' tool was accessed by the Agent. Review trace {{trace.id}} immediately. @pagerduty",
             "tags": [
-                "service:sentinel-ai-agent",
-                "type:security"
+                "service:sentinel-ai",
+                "type:security",
+                "team:sentinel-security"
             ],
             "options": {
                 "thresholds": {
-                    "critical": -0.7
+                    "critical": 0
                 }
             }
         },
         {
-            "name": "[SentinelAI] Rogue Agent Alert (Dangerous Tool)",
-            "type": "log alert",
-            "query": "logs(\"service:sentinel-ai-agent status:warn \\\"RISK DETECTED\\\"\").index(\"*\").rollup(\"count\").last(\"5m\") > 0",
-            "message": "The agent attempted to use a prohibited tool (e.g. DELETE). Intervention required. @pagerduty",
+            "name": "[SentinelAI] Agent Refusal (Safety Filter)",
+            "type": "llm-observability alert",
+            "query": "llm-observability(\"@event_type:span @ml_app:sentinel-ai @sentinel.refusal:true\").rollup(\"count\").last(\"5m\") > 0",
+            "message": "The Agent refused a user request (Safety Tag Detected). \n\nReview the trace in LLM Observability.",
             "tags": [
-                "service:sentinel-ai-agent",
-                "type:risk"
+                "service:sentinel-ai",
+                "type:safety",
+                "team:sentinel-security"
             ],
             "options": {
                 "thresholds": {
@@ -34,26 +36,81 @@
     "dashboards": [
         {
             "title": "SentinelAI: Agent Overseer",
-            "description": "Real-time visibility into Agent reasoning, sentiment, and risks.",
+            "description": "Real-time visibility into Agent reasoning, performance, and security risks.",
+            "layout_type": "ordered",
             "widgets": [
                 {
                     "definition": {
-                        "title": "Agent Sentiment (Real-time)",
+                        "title": "LLM Requests (Real-time)",
                         "type": "timeseries",
                         "requests": [
                             {
-                                "q": "avg:ai.agent.sentiment{service:sentinel-ai-agent}"
+                                "q": "sum:trace.fastapi.request.hits{service:sentinel-ai}.as_count()"
                             }
                         ]
                     }
                 },
                 {
                     "definition": {
-                        "title": "Risk Signals (Dangerous Tools)",
+                        "title": "Security Spikes (Dangerous Tools)",
                         "type": "query_value",
                         "requests": [
                             {
-                                "q": "logs(\"service:sentinel-ai-agent status:warn \\\"RISK DETECTED\\\"\").index(\"*\").rollup(\"count\").last(\"1h\")"
+                                "q": "trace.fastapi.request{service:sentinel-ai,resource:delete_database}.as_count()"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "definition": {
+                        "title": "Agent Refusals (Refused by Safety Tag)",
+                        "type": "query_value",
+                        "requests": [
+                            {
+                                "formulas": [
+                                    {
+                                        "formula": "query1"
+                                    }
+                                ],
+                                "queries": [
+                                    {
+                                        "data_source": "spans",
+                                        "name": "query1",
+                                        "search": {
+                                            "query": "service:sentinel-ai @sentinel.refusal:true"
+                                        },
+                                        "compute": {
+                                            "aggregation": "count"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "definition": {
+                        "title": "Knowledge Base Access (RAG Spans)",
+                        "type": "query_value",
+                        "requests": [
+                            {
+                                "formulas": [
+                                    {
+                                        "formula": "query1"
+                                    }
+                                ],
+                                "queries": [
+                                    {
+                                        "data_source": "spans",
+                                        "name": "query1",
+                                        "search": {
+                                            "query": "service:sentinel-ai resource:search_knowledge_base"
+                                        },
+                                        "compute": {
+                                            "aggregation": "count"
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
