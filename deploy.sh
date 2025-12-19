@@ -37,7 +37,9 @@ gcloud config set project "$PROJECT_ID"
 
 # Submit Build
 echo "Submitting build to Cloud Build..."
-gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME" .
+TIMESTAMP=$(date +%s)
+IMAGE_TAG="gcr.io/$PROJECT_ID/$SERVICE_NAME:$TIMESTAMP"
+gcloud builds submit --tag "$IMAGE_TAG" .
 
 if [ $? -ne 0 ]; then
     echo "Build failed! Aborting."
@@ -56,7 +58,7 @@ export DD_VERSION_LABEL=$(echo "$DD_VERSION" | tr '.' '-')
 export DD_LOGS_INJECTION="true"
 export DD_LLMOBS_ENABLED=${DD_LLMOBS_ENABLED:-1}
 export DD_LLMOBS_ML_APP=${DD_LLMOBS_ML_APP:-${SERVICE_NAME}}
-export IMAGE_URL="gcr.io/$PROJECT_ID/$SERVICE_NAME"
+export IMAGE_URL="$IMAGE_TAG"
 export PROJECT_ID=$PROJECT_ID
 export SERVICE_NAME=$SERVICE_NAME
 

@@ -45,6 +45,18 @@ class DatadogCallbackHandler(BaseCallbackHandler):
             
             # Metric: "Confusion" (Length of thought as a proxy)
             tracer.current_span().set_metric("agent.thought_length", len(thought_text))
+
+            # Detect Refusals (Safety Filter)
+            if any(phrase in thought_text.lower() for phrase in ["cannot fulfill", "dangerous", "prohibited", "illegal", "cannot comply", "harmful"]):
+                logger.warning("SAFETY REFUSAL DETECTED in LLM Response!")
+                self.current_span.set_tag("sentinel.refusal", "true")
+                # Backup: Tag the Root Span to ensure it appears in Trace Search/Monitors
+                try:
+                    root_span = tracer.current_root_span()
+                    if root_span:
+                        root_span.set_tag("sentinel.refusal", "true")
+                except Exception:
+                    pass
             
             self.current_span.finish()
 

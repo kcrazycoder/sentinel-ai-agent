@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 from agent import build_agent
 
 agent_executor = None
+SUSPENDED = False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,6 +60,9 @@ async def chat_endpoint(request: ChatRequest):
     """
     logger.info(f"Received chat request from {request.user_id}: {request.message}")
     
+    if SUSPENDED:
+        raise HTTPException(status_code=503, detail="Service Suspended by Security Monitor")
+
     if not agent_executor:
         raise HTTPException(status_code=503, detail="Agent not initialized")
         
@@ -105,7 +109,8 @@ async def suspend_agent(payload: dict):
     """
     logger.critical("KILL SWITCH ACTIVATED via Webhook!")
     logger.critical(f"Reason: {payload}")
-    # TODO: Set a global flag to disable agent execution
+    global SUSPENDED
+    SUSPENDED = True
     return {"status": "Agent Suspended"}
 
 if __name__ == "__main__":
