@@ -1,0 +1,15 @@
+{
+    "name": "EchoOps: High Risk Tool Usage Detected",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:agent.risk_score{service:sentinel-ai-agent} > 0.8",
+    "message": "Security Risk Detected. EchoOps activating containment protocols. @webhook-EchoOps-Suspen",
+    "tags": [
+        "service:echo-ops",
+        "type:security"
+    ],
+    "options": {
+        "thresholds": {
+            "critical": 0.8
+        }
+    }
+}

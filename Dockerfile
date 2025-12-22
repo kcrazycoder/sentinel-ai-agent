@@ -30,4 +30,4 @@ EXPOSE 8080
 
 # Run using Uvicorn (via Gunicorn for production process management is optional, 
 # but direct Uvicorn is fine for Cloud Run as it manages replication)
-CMD ["sh", "-c", "ddtrace-run uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "ddtrace-run uvicorn echo_service:app --host 0.0.0.0 --port ${PORT}"]

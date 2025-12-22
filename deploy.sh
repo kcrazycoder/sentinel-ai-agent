@@ -67,6 +67,7 @@ if [ -f .env ]; then
   # Sourcing .env is risky if it has comments/spaces, but typical for simple envs.
   # Better: Read key-by-key for known keys.
   export DD_API_KEY=$(grep -v '^#' .env | grep 'DD_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+  export ELEVENLABS_API_KEY=$(grep -v '^#' .env | grep 'ELEVENLABS_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
   export DD_SITE=$(grep -v '^#' .env | grep 'DD_SITE' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
   
   # Format remaining env vars as YAML list items for the APP container
@@ -80,7 +81,8 @@ if [ -f .env ]; then
        [[ "$key" == "project_id" ]] || [[ "$key" == "DD_SERVICE" ]] || \
        [[ "$key" == "DD_ENV" ]] || [[ "$key" == "DD_VERSION" ]] || \
        [[ "$key" == "DD_LOGS_INJECTION" ]] || [[ "$key" == "DD_LLMOBS_ENABLED" ]] || \
-       [[ "$key" == "DD_LLMOBS_ML_APP" ]] || [[ "$key" == "DD_APP_KEY" ]]; then
+       [[ "$key" == "DD_LLMOBS_ML_APP" ]] || [[ "$key" == "DD_APP_KEY" ]] || \
+       [[ "$key" == "ELEVENLABS_API_KEY" ]]; then
        continue
     fi
     # Clean value

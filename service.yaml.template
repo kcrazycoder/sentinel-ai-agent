@@ -38,7 +38,9 @@ spec:
         - name: DD_LLMOBS_ENABLED
           value: "${DD_LLMOBS_ENABLED}"
         - name: DD_LLMOBS_ML_APP
-          value: "${DD_LLMOBS_ML_APP}"${APP_ENV_VARS_BLOCK}
+          value: "${DD_LLMOBS_ML_APP}"
+        - name: ELEVENLABS_API_KEY
+          value: "${ELEVENLABS_API_KEY}"${APP_ENV_VARS_BLOCK}
             
       - image: gcr.io/datadoghq/agent:latest
         name: datadog-agent

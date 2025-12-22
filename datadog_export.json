@@ -1,0 +1,35 @@
+{
+    "title": "EchoOps: Voice Command War Room",
+    "description": "Real-time Incident Response Dashboard with Voice Integration",
+    "widgets": [
+        {
+            "definition": {
+                "type": "iframe",
+                "url": "https://sentinel-ai-967479678472.us-central1.run.app/static/index.html",
+                "title": "Voice Console (Live)"
+            },
+            "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 4
+            }
+        },
+        {
+            "definition": {
+                "title": "Latency Heatmap",
+                "type": "trace_service",
+                "env": "production",
+                "service": "sentinel-ai-agent",
+                "span_name": "agent.thought",
+                "show_breakdown": true
+            },
+            "layout": {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 4
+            }
+        }
+    ]
+}
