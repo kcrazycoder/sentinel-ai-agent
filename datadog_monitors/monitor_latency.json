@@ -1,9 +1,13 @@
 {
     "name": "EchoOps: High Latency Detected in PaymentService",
     "type": "query alert",
-    "query": "avg(last_5m):avg:trace.http.request.duration{service:sentinel-ai-agent} > 0.5",
-    "message": "High Latency Detected. Triggering EchoOps Voice Incident Response @webhook-EchoOps-Suspen",
-    "tags": ["service:echo-ops", "env:production", "team:sre"],
+    "query": "avg(last_5m):avg:trace.fastapi.request.hits{service:sentinel-ai} > 0.5",
+    "message": "High Latency Detected. Triggering EchoOps Voice Incident Response @webhook-EchoOps-Suspend",
+    "tags": [
+        "service:echo-ops",
+        "env:production",
+        "team:sre"
+    ],
     "options": {
         "thresholds": {
             "critical": 0.5,
@@ -11,7 +15,6 @@
         },
         "notify_audit": false,
         "include_tags": true,
-        "new_group_delay": 60,
         "notify_no_data": false,
         "renotify_interval": 0
     }

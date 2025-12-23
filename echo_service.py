@@ -37,7 +37,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Initialize Gemini
 try:
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro", # Using Pro for better reasoning on logs
+        model="gemini-2.5-flash-lite", # Using Flash Lite as requested
         temperature=0.1,
         max_retries=2
     )
@@ -109,6 +109,8 @@ async def datadog_webhook(payload: dict):
             
             # 4. Generate Voice
             audio_bytes = generate_voice(sitrep_script)
+            audio_path = None
+            
             if audio_bytes:
                 # Save to static folder
                 audio_filename = "latest_sitrep.mp3"
@@ -118,6 +120,16 @@ async def datadog_webhook(payload: dict):
                 audio_path = f"/static/{audio_filename}"
                 logger.info(f"Audio saved to {file_path}")
             
+            # Write Status for Frontend (Fallback Support)
+            import json
+            status_data = {
+                "text": sitrep_script,
+                "audio_available": audio_path is not None,
+                "timestamp": str(payload.get("timestamp", "now"))
+            }
+            with open(os.path.join("static", "status.json"), "w") as f:
+                json.dump(status_data, f)
+
             return {
                 "status": "processed", 
                 "sitrep": sitrep_script,

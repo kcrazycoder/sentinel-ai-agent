@@ -1,7 +1,7 @@
 # Project Proposal: EchoOps - "The System That Speaks"
 
 ## 1. The Concept
-**EchoOps** is an ambient computing interface for DevOps. It transforms Datadog from a visual dashboard into an **active voice participant** in the war room. By chaining **Datadog Signals**, **Gemini 1.5 Pro**, and **ElevenLabs**, it allows engineers to *hear* the root cause of an incident and *speak* the remediation, drastically reducing Mean Time To Resolution (MTTR).
+**EchoOps** is an ambient computing interface for DevOps. It transforms Datadog from a visual dashboard into an **active voice participant** in the war room. By chaining **Datadog Signals**, **Gemini 2.5 Flash Lite**, and **ElevenLabs**, it allows engineers to *hear* the root cause of an incident and *speak* the remediation, drastically reducing Mean Time To Resolution (MTTR).
 
 > **Elevator Pitch**: "Iron Man's JARVIS for Site Reliability Engineers."
 
@@ -26,8 +26,7 @@ graph TD
     -   **Trigger**: Webhooks from Monitors.
     -   **Visualization**: Custom IFrame Widget for the "Voice Console".
     -   **Action**: Datadog Workflows triggered via API to execute infrastructure changes.
-2.  **Google Vertex AI (Gemini 1.5)**:
-    -   **Role**: The Intelligence Layer.
+2.  **Google Vertex AI (Gemini 2.5 Flash Lite)**:
     -   **Task 1**: Correlates alert data with recent logs to write a concise "Situation Report".
     -   **Task 2**: Validates high-stakes voice commands (e.g., preventing accidental DB drops).
 3.  **ElevenLabs**:

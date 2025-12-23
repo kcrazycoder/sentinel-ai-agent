@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1"
-DEFAULT_VOICE_ID = "nPczCjz8uKBlEjV8EqG8"  # "Brian" - Narrator / Deep Voice
+DEFAULT_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # "Adam" - Standard American / Deep Voice
 MODEL_ID = "eleven_turbo_v2" # Low latency model
 
 def generate_voice(text: str, voice_id: str = DEFAULT_VOICE_ID) -> Optional[bytes]:
@@ -42,6 +42,9 @@ def generate_voice(text: str, voice_id: str = DEFAULT_VOICE_ID) -> Optional[byte
         if response.status_code == 200:
             logger.info(f"Generated voice audio ({len(response.content)} bytes).")
             return response.content
+        elif response.status_code in [401, 403]:
+            logger.warning(f"ElevenLabs Auth Failed ({response.status_code}). Enabling Text-Only Fallback.")
+            return None
         else:
             logger.error(f"ElevenLabs API Error: {response.status_code} - {response.text}")
             return None

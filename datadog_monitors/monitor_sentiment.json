@@ -1,8 +1,8 @@
 {
     "name": "EchoOps: Negative User Sentiment Detected",
     "type": "query alert",
-    "query": "avg(last_10m):avg:ai.agent.sentiment{service:sentinel-ai-agent} < -0.5",
-    "message": "User Frustration Spike. EchoOps suggesting intervention. @webhook-EchoOps-Suspen",
+    "query": "avg(last_10m):avg:ai.agent.sentiment{service:sentinel-ai} < -0.5",
+    "message": "User Frustration Spike. EchoOps suggesting intervention. @webhook-EchoOps-Suspend",
     "tags": [
         "service:echo-ops",
         "type:ux"

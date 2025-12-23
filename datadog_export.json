@@ -5,8 +5,7 @@
         {
             "definition": {
                 "type": "iframe",
-                "url": "https://sentinel-ai-967479678472.us-central1.run.app/static/index.html",
-                "title": "Voice Console (Live)"
+                "url": "https://sentinel-ai-967479678472.us-central1.run.app/static/index.html"
             },
             "layout": {
                 "x": 0,
@@ -20,7 +19,7 @@
                 "title": "Latency Heatmap",
                 "type": "trace_service",
                 "env": "production",
-                "service": "sentinel-ai-agent",
+                "service": "sentinel-ai",
                 "span_name": "agent.thought",
                 "show_breakdown": true
             },
@@ -31,5 +30,10 @@
                 "height": 4
             }
         }
-    ]
+    ],
+    "template_variables": [],
+    "layout_type": "ordered",
+    "notify_list": [],
+    "reflow_type": "fixed",
+    "pause_auto_refresh": false
 }

@@ -8,7 +8,7 @@ By chaining **Datadog Signals**, **Google Gemini 1.5 Pro**, and **ElevenLabs**, 
 
 ## 🚀 Features
 
--   **Voice-Enabled Incidents**: Transforms Datadog Webhook payloads into concise, audible "Situation Reports" (SitReps) using Gemini 1.5 Pro.
+-   **Voice-Enabled Incidents**: Transforms Datadog Webhook payloads into concise, audible "Situation Reports" (SitReps) using Gemini 2.5 Flash Lite.
 -   **High-Fidelity Audio**: Uses ElevenLabs *Turbo v2* model for sub-second text-to-speech generation.
 -   **Active Remediation**: Accepts voice commands (simulated via API) to trigger infrastructure changes.
 -   **Observability First**: Full `ddtrace` integration for every voice generation step.
