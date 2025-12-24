@@ -1,0 +1,19 @@
+{
+    "name": "EchoOps - Restart Service Action Detected",
+    "type": "metric alert",
+    "query": "sum(last_5m):sum:echo_ops.intent.tool_usage{service:sentinel-ai,tool_name:restart_service}.as_count() > 0",
+    "message": "{{#is_alert}}\nRestart Service Action Detected!\n\nThe AI has initiated a service restart. Monitor deployment health.\n\nMetric: echo_ops.intent.tool_usage (tool_name:restart_service)\n{{/is_alert}}",
+    "tags": [
+        "service:sentinel-ai",
+        "env:production",
+        "action:restart",
+        "team:sre"
+    ],
+    "options": {
+        "notify_no_data": false,
+        "renotify_interval": 60,
+        "thresholds": {
+            "critical": 0
+        }
+    }
+}
