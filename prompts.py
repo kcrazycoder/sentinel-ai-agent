@@ -33,6 +33,7 @@ An engineer has spoken a command to resolve an incident. Your job is to map it t
 2.  `scale_service(service_name: str, replicas: int)`
 3.  `rollback_service(service_name: str, version: str)`
 4.  `get_logs(service_name: str)`
+5.  `get_status(service_name: str)`
 
 **Input:**
 User Voice Transcript: "{transcript}"

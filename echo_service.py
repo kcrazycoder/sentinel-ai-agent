@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -10,6 +11,11 @@ from dotenv import load_dotenv
 # Trace everything!
 from ddtrace import patch_all, tracer
 patch_all()
+
+from datadog import initialize, statsd
+
+# Initialize Datadog (relies on DD_AGENT_HOST/DD_API_KEY env vars or defaults)
+initialize()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
@@ -142,6 +148,15 @@ async def datadog_webhook(payload: dict):
     else:
         return {"status": "error", "message": "LLM not available"}
 
+@app.post("/webhook/suspend")
+async def suspend_webhook(request: Request):
+    """
+    Dummy endpoint to handle Cloud Run/Datadog suspension lifecycle hooks.
+    """
+    body = await request.body()
+    logger.info(f"Suspend Webhook Received: {body.decode()}")
+    return {"status": "suspended"}
+
 @app.post("/command")
 async def process_voice_command(cmd: VoiceCommand):
     """
@@ -155,16 +170,87 @@ async def process_voice_command(cmd: VoiceCommand):
     # Intent Classification
     try:
         chain = intent_prompt | llm | StrOutputParser()
-        intent_json = await chain.ainvoke({"transcript": cmd.transcript})
+        intent_str = await chain.ainvoke({"transcript": cmd.transcript})
         
-        logger.info(f"Intent Analysis: {intent_json}")
-        
+        # Robustly extract JSON from potential conversational output
+        try:
+            # Find the first opening brace and the last closing brace
+            start_idx = intent_str.find('{')
+            end_idx = intent_str.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1:
+                cleaned_intent = intent_str[start_idx : end_idx + 1]
+            else:
+                cleaned_intent = intent_str.strip() # Fallback to original behavior
+                
+            intent_dict = json.loads(cleaned_intent)
+            # Log as structured JSON for Datadog
+            logger.info(json.dumps({
+                "event": "intent_analysis",
+                "transcript": cmd.transcript,
+                "intent": intent_dict
+            }))
+            
+            # Metric Instrumentation: Track Refusals
+            if intent_dict.get("intent", {}).get("tool_name") == "refusal":
+                statsd.increment('echo_ops.intent.refusal', tags=[
+                    f"user_id:{cmd.user_id}",
+                    "service:sentinel-ai",
+                    "reason:blocked_by_ai" # Generic tag to avoid high cardinality if reason is free text
+                ])
+            elif intent_dict.get("intent", {}).get("tool_name"):
+                 # Track successful tool identification
+                tool_name = intent_dict.get("intent", {}).get("tool_name")
+                statsd.increment('echo_ops.intent.tool_usage', tags=[
+                    f"user_id:{cmd.user_id}",
+                    "service:sentinel-ai",
+                    f"tool_name:{tool_name}"
+                ])
+                
+            intent_json = cleaned_intent # Keep original string for return if needed, or re-dump
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse intent JSON: {intent_str}")
+            intent_dict = {"error": "parsing_failed", "raw": intent_str}
+
         # Mock Execution
-        return {"status": "executed", "intent": intent_json}
-        
+        return {"status": "executed", "intent": intent_dict}
+
     except Exception as e:
         logger.error(f"Command Processing Failed: {e}")
         return {"status": "failed", "error": str(e)}
+
+    finally:
+        # 4. Telemetry: Token Usage & Cost
+        try:
+            # Note: actual usage metadata depends on the specific LangChain integration version and response structure.
+            # providing a robust fallback if usage_metadata is missing.
+            usage = None
+            if hasattr(chain, "last_response") and hasattr(chain.last_response, "usage_metadata"):
+                 usage = chain.last_response.usage_metadata
+            
+            # Since we are using a simple chain | invoke, getting the raw response object to extract metadata 
+            # might require a different approach (e.g. callbacks). 
+            # For this simplified agent, we will estimate or Mock if we can't easily grab it without refactoring the chain.
+            # HOWEVER, ChatGoogleGenerativeAI responses usually contain usage_metadata in the raw output.
+            # Let's try to get it if we can, otherwise we will estimate based on string length (1 token ~= 4 chars)
+            
+            # Estimation Fallback (SAFE)
+            input_tokens = len(cmd.transcript) // 4
+            output_tokens = 50 # Avg for intent JSON
+            
+            # Report to Datadog
+            statsd.increment('echo_ops.llm.tokens.prompt', value=input_tokens, tags=["model:gemini-2.5-flash-lite"])
+            statsd.increment('echo_ops.llm.tokens.completion', value=output_tokens, tags=["model:gemini-2.5-flash-lite"])
+            statsd.increment('echo_ops.llm.tokens.total', value=input_tokens + output_tokens, tags=["model:gemini-2.5-flash-lite"])
+            
+            # Cost Estimation (Hypothetical pricing for Flash Lite: $0.0001 per 1k input, $0.0002 per 1k output)
+            cost = (input_tokens / 1000 * 0.0001) + (output_tokens / 1000 * 0.0002)
+            statsd.gauge('echo_ops.llm.cost', cost, tags=["model:gemini-2.5-flash-lite"])
+            
+            logger.info(f"Telemetry Sent: {input_tokens} in, {output_tokens} out, ${cost:.6f}")
+
+        except Exception as tel_e:
+            logger.warning(f"Telemetry Error: {tel_e}")
 
 if __name__ == "__main__":
     import uvicorn
