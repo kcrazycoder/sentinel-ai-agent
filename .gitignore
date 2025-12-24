@@ -44,3 +44,6 @@ dd-trace-py/
 
 # Logs
 *.log
+
+# Generated Files
+service.yaml
