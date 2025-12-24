@@ -208,6 +208,19 @@ async def process_voice_command(cmd: VoiceCommand):
                 ])
                 
             intent_json = cleaned_intent # Keep original string for return if needed, or re-dump
+
+            # Update Frontend Dashboard
+            try:
+                status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {intent_dict.get('intent', {}).get('tool_name', 'UNKNOWN')}"
+                status_data = {
+                    "text": status_text,
+                    "audio_available": False,
+                    "timestamp": str(os.times()[4]) # Use a simple changing timestamp
+                }
+                with open(os.path.join("static", "status.json"), "w") as f:
+                    json.dump(status_data, f)
+            except Exception as e:
+                logger.error(f"Failed to update dashboard status: {e}")
         except json.JSONDecodeError:
             logger.warning(f"Failed to parse intent JSON: {intent_str}")
             intent_dict = {"error": "parsing_failed", "raw": intent_str}
