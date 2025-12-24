@@ -192,15 +192,16 @@ async def process_voice_command(cmd: VoiceCommand):
             }))
             
             # Metric Instrumentation: Track Refusals
-            if intent_dict.get("intent", {}).get("tool_name") == "refusal":
+            tool_name = intent_dict.get("tool_name")
+            
+            if tool_name == "refusal":
                 statsd.increment('echo_ops.intent.refusal', tags=[
                     f"user_id:{cmd.user_id}",
                     "service:sentinel-ai",
                     "reason:blocked_by_ai" # Generic tag to avoid high cardinality if reason is free text
                 ])
-            elif intent_dict.get("intent", {}).get("tool_name"):
+            elif tool_name:
                  # Track successful tool identification
-                tool_name = intent_dict.get("intent", {}).get("tool_name")
                 statsd.increment('echo_ops.intent.tool_usage', tags=[
                     f"user_id:{cmd.user_id}",
                     "service:sentinel-ai",
@@ -211,7 +212,7 @@ async def process_voice_command(cmd: VoiceCommand):
 
             # Update Frontend Dashboard
             try:
-                status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {intent_dict.get('intent', {}).get('tool_name', 'UNKNOWN')}"
+                status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {tool_name or 'UNKNOWN'}"
                 status_data = {
                     "text": status_text,
                     "audio_available": False,
