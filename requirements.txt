@@ -6,3 +6,4 @@ pydantic>=2.6.0
 python-dotenv
 requests
 elevenlabs>=0.2.27
+datadog>=0.40.0
