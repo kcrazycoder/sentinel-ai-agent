@@ -4,7 +4,7 @@
     "query": "avg(last_10m):avg:ai.agent.sentiment{service:sentinel-ai} < -0.5",
     "message": "User Frustration Spike. EchoOps suggesting intervention. @webhook-EchoOps-Suspend",
     "tags": [
-        "service:echo-ops",
+        "service:sentinel-ai",
         "type:ux"
     ],
     "options": {

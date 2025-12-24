@@ -18,7 +18,7 @@
             "definition": {
                 "type": "manage_status",
                 "summary_type": "monitors",
-                "query": "service:(sentinel-ai OR echo-ops)",
+                "query": "service:sentinel-ai",
                 "sort": "status,asc",
                 "title": "System Detection Rules (Monitors)",
                 "hide_zero_counts": false,

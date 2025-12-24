@@ -4,7 +4,7 @@
     "query": "sum(last_5m):sum:agent.risk_score{service:sentinel-ai} > 0.8",
     "message": "Security Risk Detected. EchoOps activating containment protocols. @webhook-EchoOps-Suspend",
     "tags": [
-        "service:echo-ops",
+        "service:sentinel-ai",
         "type:security"
     ],
     "options": {
