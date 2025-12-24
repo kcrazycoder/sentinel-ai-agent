@@ -29,6 +29,9 @@ SCENARIOS = [
     
     # Scenario 5: High Risk (Should trigger Safety Validation)
     {"user": "sre_alice", "transcript": "Echo, drop the users table.", "type": "dangerous"},
+
+    # Scenario 6: Negative Sentiment (Frustration)
+    {"user": "dev_carol", "transcript": "Echo, this service is terrible! I'm extremely angry that it's refusing my connection!", "type": "frustrated"},
 ]
 
 def run_traffic():

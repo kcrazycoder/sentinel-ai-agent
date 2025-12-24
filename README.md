@@ -55,6 +55,17 @@ ddtrace-run uvicorn echo_service:app --reload
 ```
 *Port 8000 is now active.*
 
+### 4. Deploy to Google Cloud Run
+To deploy the hosted application:
+
+1.  Ensure you have the Google Cloud SDK installed and authenticated.
+2.  Run the deployment script:
+    ```bash
+    sh deploy.sh
+    ```
+3.  Follow the prompts to enter your Project ID. The script will build the container and deploy to Cloud Run.
+4.  Once complete, it will output the **Hosted Application URL**.
+
 ## 🎧 Demo Walkthrough
 
 1.  **Open the Console**: Navigate to `http://localhost:8000/static/index.html`. This is your "Headless Console".
