@@ -560,6 +560,23 @@
                 }
             };
 
+            // --- TTS Helper ---
+            function speakResponse(text) {
+                if ('speechSynthesis' in window) {
+                    // Cancel any ongoing speech
+                    window.speechSynthesis.cancel();
+
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    // Optional: Select a "tech" sounding voice if available
+                    // const voices = window.speechSynthesis.getVoices();
+                    // utterance.voice = voices.find(v => v.name.includes('Google US English')) || voices[0];
+
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 lastSentTranscript = transcript;
@@ -592,6 +609,8 @@
                             const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
                             html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
                                 <div>${reason}</div>`;
+
+                            speakResponse("Action denied. " + reason);
                         } else {
                             // Success UI
                             html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
@@ -610,6 +629,9 @@
                             if (data.message && !data.message.startsWith("Executed")) {
                                 html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">${data.message}</div>`;
                             }
+
+                            // Speak the message
+                            speakResponse(data.message || "Command executed.");
                         }
 
                         // 3. Display System Response
@@ -620,6 +642,7 @@
                         statusBar.textContent = "TRANSMISSION FAILED";
                         statusBar.style.color = "red";
                         renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
+                        speakResponse("Transmission failed.");
                     });
             };
 
