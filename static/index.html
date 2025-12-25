@@ -432,10 +432,6 @@
         }
 
         function renderUserCard(text) {
-            // If interaction was not active (e.g. fresh start), clear any old visible system msg
-            // However, we said "When a new command is received, populate another section".
-            // So YES, always clear previous context when User speaks.
-
             clearActiveDisplay();
 
             const card = document.createElement('div');
@@ -451,18 +447,10 @@
             activeDisplay.scrollTop = activeDisplay.scrollHeight;
         }
 
-        function renderSystemCard(text, isError = false, title = "ECHO_OPS") {
-            // If we are appending to a user command, do NOT clear.
-            // If this is a standalone signal (SitRep) and no user command is currently "pending", 
-            // then we might want to clear the previous stale context.
-
+        function renderSystemCard(contentHtml, isError = false, title = "ECHO_OPS") {
             if (!interactionActive && activeDisplay.children.length > 0) {
-                // If there's something there but it's not part of this "turn", archive it.
                 clearActiveDisplay();
             }
-
-            // If we are pairing, we keep the User card and add System card.
-            // Then the interaction is considered "complete" but we leave it visible until NEXT event.
 
             const card = document.createElement('div');
             card.className = 'card system-card';
@@ -472,23 +460,12 @@
                 <div class="card-label">
                     <span>${title}</span>
                 </div>
-                <div class="card-content"></div>
+                <div class="card-content">${contentHtml}</div>
             `;
             activeDisplay.appendChild(card);
 
-            // Typewriter effect
-            const contentDiv = card.querySelector('.card-content');
-            let i = 0;
-            const speed = 20;
-            function type() {
-                if (i < text.length) {
-                    contentDiv.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                    activeDisplay.scrollTop = activeDisplay.scrollHeight;
-                }
-            }
-            type();
+            // Auto scroll
+            activeDisplay.scrollTop = activeDisplay.scrollHeight;
 
             // Reset interaction flag because turn is done
             interactionActive = false;
@@ -507,10 +484,6 @@
                     if (data && data.timestamp !== lastStatusTime) {
                         lastStatusTime = data.timestamp;
 
-                        // This is a new event from System.
-                        // If it's audio, play it.
-                        // Render card.
-
                         let msg = data.text;
                         if (!msg) return;
 
@@ -523,8 +496,14 @@
                         // If audio available, auto play
                         if (data.audio_available) {
                             player.src = "/static/latest_sitrep.wav?t=" + new Date().getTime();
-                            player.play().catch(e => console.log("Autoplay blocked"));
-                            statusBar.textContent = "INCOMING TRANSMISSION...";
+                            player.play().catch(e => {
+                                console.log("Autoplay blocked");
+                                statusBar.textContent = "AUTOPLAY BLOCKED - CLICK PLAY";
+                                statusBar.style.color = "#ffaa00";
+                            });
+                            if (statusBar.textContent !== "AUTOPLAY BLOCKED - CLICK PLAY") {
+                                statusBar.textContent = "INCOMING TRANSMISSION...";
+                            }
                         } else {
                             statusBar.textContent = "TEXT TRANSMISSION RECEIVED";
                         }
@@ -585,11 +564,40 @@
                         console.log("Response:", data);
                         statusBar.textContent = "RESPONSE RECEIVED";
 
-                        const message = data.message || "Command Processed.";
-                        const isError = (data.intent && data.intent.tool_name === "refusal");
+                        const intent = data.intent || {};
+                        const toolName = intent.tool_name || "Unknown";
+                        const isRefusal = toolName === "refusal";
+
+                        // Construct Rich HTML
+                        let html = "";
+
+                        if (isRefusal) {
+                            // Refusal UI
+                            const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
+                            html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
+                                <div>${reason}</div>`;
+                        } else {
+                            // Success UI
+                            html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
+
+                            // Add Params
+                            if (intent.arguments && Object.keys(intent.arguments).length > 0) {
+                                html += `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 5px;">PARAMS:</div>
+                                     <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; opacity: 0.8;">`;
+                                for (const [key, val] of Object.entries(intent.arguments)) {
+                                    html += `<li>${key}: ${val}</li>`;
+                                }
+                                html += `</ul>`;
+                            }
+
+                            // Add overall message if distinct from simple generic message
+                            if (data.message && !data.message.startsWith("Executed")) {
+                                html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">${data.message}</div>`;
+                            }
+                        }
 
                         // 3. Display System Response
-                        renderSystemCard(message, isError);
+                        renderSystemCard(html, isRefusal);
                     })
                     .catch(err => {
                         console.error('Error:', err);
