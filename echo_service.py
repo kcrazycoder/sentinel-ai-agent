@@ -127,24 +127,24 @@ async def datadog_webhook(payload: dict):
             
             logger.info(f"Generated SitRep: {sitrep_script}")
             
-            # 4. Generate Voice
-            audio_bytes = generate_voice(sitrep_script)
+            # 4. Generate Voice (DISABLED REQUEST)
+            # audio_bytes = generate_voice(sitrep_script)
             audio_path = None
             
-            if audio_bytes:
-                # Save to static folder
-                audio_filename = "latest_sitrep.wav"
-                file_path = os.path.join("static", audio_filename)
-                with open(file_path, "wb") as f:
-                    f.write(audio_bytes)
-                audio_path = f"/static/{audio_filename}"
-                logger.info(f"Audio saved to {file_path}")
+            # if audio_bytes:
+            #     # Save to static folder
+            #     audio_filename = "latest_sitrep.wav"
+            #     file_path = os.path.join("static", audio_filename)
+            #     with open(file_path, "wb") as f:
+            #         f.write(audio_bytes)
+            #     audio_path = f"/static/{audio_filename}"
+            #     logger.info(f"Audio saved to {file_path}")
             
             # Write Status for Frontend (Fallback Support)
             import json
             status_data = {
                 "text": sitrep_script,
-                "audio_available": audio_path is not None,
+                "audio_available": False, # Explicitly disabled
                 "timestamp": str(payload.get("timestamp", "now"))
             }
             with open(os.path.join("static", "status.json"), "w") as f:
@@ -224,24 +224,13 @@ async def process_voice_command(cmd: VoiceCommand):
                 
             intent_json = cleaned_intent # Keep original string for return if needed, or re-dump
 
-            # Update Frontend Dashboard
-            try:
-                status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {tool_name or 'UNKNOWN'}"
-                status_data = {
-                    "text": status_text,
-                    "audio_available": False,
-                    "timestamp": str(os.times()[4]) # Use a simple changing timestamp
-                }
-                with open(os.path.join("static", "status.json"), "w") as f:
-                    json.dump(status_data, f)
-            except Exception as e:
-                logger.error(f"Failed to update dashboard status: {e}")
         except json.JSONDecodeError:
             logger.warning(f"Failed to parse intent JSON: {intent_str}")
             intent_dict = {"error": "parsing_failed", "raw": intent_str}
 
         # Construct Feedback Message
         message = ""
+        tool_name = intent_dict.get("tool_name") # Re-get tool_name in case of parsing error
         if tool_name == "refusal":
             # Robust extraction of reason
             reason = "Unknown reason"
@@ -258,6 +247,19 @@ async def process_voice_command(cmd: VoiceCommand):
                 message += f" ({args_str})"
         else:
             message = "Command Processed (No specific tool identified)"
+
+        # Update Frontend Dashboard (With rich info)
+        try:
+            status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {tool_name or 'UNKNOWN'}\nRESULT: {message}"
+            status_data = {
+                "text": status_text,
+                "audio_available": False,
+                "timestamp": str(os.times()[4])
+            }
+            with open(os.path.join("static", "status.json"), "w") as f:
+                json.dump(status_data, f)
+        except Exception as e:
+            logger.error(f"Failed to update dashboard status: {e}")
 
         # Mock Execution
         return {

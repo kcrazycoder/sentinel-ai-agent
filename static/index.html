@@ -353,22 +353,6 @@
         <!-- Inputs -->
         <button id="record-btn">INITIATE VOICE COMMAND</button>
 
-        <audio id="player" controls>
-            <source src="/static/latest_sitrep.wav" type="audio/wav">
-        </audio>
-    </div>
-
-    <script>
-        // --- UI Setup ---
-        const visualizer = document.getElementById('visualizer');
-        for (let i = 0; i < 40; i++) { // Increased bars
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-            bar.style.height = '5px';
-            visualizer.appendChild(bar);
-        }
-
-        const player = document.getElementById('player');
         const statusBar = document.getElementById('status-bar');
         const recordBtn = document.getElementById('record-btn');
         const activeDisplay = document.getElementById('active-display');
@@ -377,12 +361,12 @@
         // Toggle Panels
         // Toggle Panels
         const toggleHelp = () => {
-            document.getElementById('help-panel').classList.toggle('open');
-            document.getElementById('history-panel').classList.remove('open');
+        document.getElementById('help-panel').classList.toggle('open');
+        document.getElementById('history-panel').classList.remove('open');
         };
         const toggleHistory = () => {
-            document.getElementById('history-panel').classList.toggle('open');
-            document.getElementById('help-panel').classList.remove('open');
+        document.getElementById('history-panel').classList.toggle('open');
+        document.getElementById('help-panel').classList.remove('open');
         };
 
         document.getElementById('help-btn').onclick = toggleHelp;
@@ -390,30 +374,22 @@
 
         // Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-            if (e.key.toLowerCase() === 'l') {
-                toggleHistory();
-            }
-            if (e.key === '?') {
-                toggleHelp();
-            }
+        if (e.key.toLowerCase() === 'l') {
+        toggleHistory();
+        }
+        if (e.key === '?') {
+        toggleHelp();
+        }
         });
 
-        // --- Visualizer Animation ---
-        function animate() {
-            if (!player.paused) {
-                document.querySelectorAll('.bar').forEach(bar => {
-                    bar.style.height = Math.random() * 30 + 5 + 'px';
-                });
-            } else {
-                document.querySelectorAll('.bar').forEach(bar => {
-                    bar.style.height = '5px';
-                });
-            }
-            requestAnimationFrame(animate);
-        }
-        animate();
+        // Visualizer (Static for now or simulated random)
+        // Since player is gone, we can simple remove the animation or just make it idle.
+        // Let's keep it static low.
+        document.querySelectorAll('.bar').forEach(bar => {
+        bar.style.height = '5px';
+        });
 
         // --- Display Logic ---
 
@@ -422,69 +398,69 @@
         let interactionActive = false;
 
         function addToHistory(htmlContent) {
-            // Remove the "No logs" placeholder if valid
-            if (historyList.querySelector('p')?.textContent.includes('No logs')) {
-                historyList.innerHTML = '';
-            }
+        // Remove the "No logs" placeholder if valid
+        if (historyList.querySelector('p')?.textContent.includes('No logs')) {
+        historyList.innerHTML = '';
+        }
 
-            const item = document.createElement('div');
-            item.className = 'history-item';
+        const item = document.createElement('div');
+        item.className = 'history-item';
 
-            const timestamp = new Date().toLocaleTimeString();
-            item.innerHTML = `<div class="history-timestamp">${timestamp}</div>` + htmlContent;
+        const timestamp = new Date().toLocaleTimeString();
+        item.innerHTML = `<div class="history-timestamp">${timestamp}</div>` + htmlContent;
 
-            // Prepend (Newest at top)
-            historyList.insertBefore(item, historyList.firstChild);
+        // Prepend (Newest at top)
+        historyList.insertBefore(item, historyList.firstChild);
         }
 
         function clearActiveDisplay() {
-            if (activeDisplay.children.length > 0) {
-                // Determine what to archive. 
-                // We archive whatever HTML is currently inside active-display
-                const contentToArchive = activeDisplay.innerHTML;
-                addToHistory(contentToArchive);
-            }
-            activeDisplay.innerHTML = '';
+        if (activeDisplay.children.length > 0) {
+        // Determine what to archive.
+        // We archive whatever HTML is currently inside active-display
+        const contentToArchive = activeDisplay.innerHTML;
+        addToHistory(contentToArchive);
+        }
+        activeDisplay.innerHTML = '';
         }
 
         function renderUserCard(text) {
-            clearActiveDisplay();
+        clearActiveDisplay();
 
-            const card = document.createElement('div');
-            card.className = 'card user-card';
-            card.innerHTML = `
-                <div class="card-label">COMMANDER</div>
-                <div class="card-content">${text}</div>
-            `;
-            activeDisplay.appendChild(card);
-            interactionActive = true;
+        const card = document.createElement('div');
+        card.className = 'card user-card';
+        card.innerHTML = `
+        <div class="card-label">COMMANDER</div>
+        <div class="card-content">${text}</div>
+        `;
+        activeDisplay.appendChild(card);
+        interactionActive = true;
 
-            // Auto scroll
-            activeDisplay.scrollTop = activeDisplay.scrollHeight;
+        // Auto scroll
+        activeDisplay.scrollTop = activeDisplay.scrollHeight;
         }
 
         function renderSystemCard(contentHtml, isError = false, title = "ECHO_OPS") {
-            if (!interactionActive && activeDisplay.children.length > 0) {
-                clearActiveDisplay();
-            }
+        if (!interactionActive && activeDisplay.children.length > 0) {
+        clearActiveDisplay();
+        }
 
-            const card = document.createElement('div');
-            card.className = 'card system-card';
-            if (isError) card.style.borderColor = "#ff0000";
+        const card = document.createElement('div');
+        card.className = 'card system-card';
+        if (isError) card.style.borderColor = "#ff0000";
 
-            card.innerHTML = `
-                <div class="card-label">
-                    <span>${title}</span>
-                </div>
-                <div class="card-content">${contentHtml}</div>
-            `;
-            activeDisplay.appendChild(card);
+        card.innerHTML = `
+        <div class="card-label">
+            <span>${title}</span>
+        </div>
+        <div class="card-content">${contentHtml}</div>
+        `;
+        activeDisplay.appendChild(card);
 
-            // Auto scroll
-            activeDisplay.scrollTop = activeDisplay.scrollHeight;
+        // Auto scroll
+        activeDisplay.scrollTop = activeDisplay.scrollHeight;
 
-            // Reset interaction flag because turn is done
-            interactionActive = false;
+        // Reset interaction flag because turn is done
+        interactionActive = false;
         }
 
         // --- Core Application Logic ---
@@ -494,171 +470,160 @@
 
         // Status Polling (SitReps / Incidents)
         setInterval(() => {
-            fetch('/static/status.json?t=' + new Date().getTime())
-                .then(r => r.ok ? r.json() : null)
-                .then(data => {
-                    if (data && data.timestamp !== lastStatusTime) {
-                        lastStatusTime = data.timestamp;
+        fetch('/static/status.json?t=' + new Date().getTime())
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+        if (data && data.timestamp !== lastStatusTime) {
+        lastStatusTime = data.timestamp;
 
-                        let msg = data.text;
-                        if (!msg) return;
+        let msg = data.text;
+        if (!msg) return;
 
-                        // Filter out echoes of our own commands (handled by direct response)
-                        if (msg.startsWith("COMMAND RECEIVED") && lastSentTranscript && msg.includes(lastSentTranscript)) {
-                            console.log("Skipping self-echo status update");
-                            return;
-                        }
+        // Filter out echoes of our own commands (handled by direct response)
+        if (msg.startsWith("COMMAND RECEIVED") && lastSentTranscript && msg.includes(lastSentTranscript)) {
+        console.log("Skipping self-echo status update");
+        return;
+        }
 
-                        // If audio available, auto play
-                        if (data.audio_available) {
-                            player.src = "/static/latest_sitrep.wav?t=" + new Date().getTime();
-                            player.play().catch(e => {
-                                console.log("Autoplay blocked");
-                                statusBar.textContent = "AUTOPLAY BLOCKED - CLICK PLAY";
-                                statusBar.style.color = "#ffaa00";
-                            });
-                            if (statusBar.textContent !== "AUTOPLAY BLOCKED - CLICK PLAY") {
-                                statusBar.textContent = "INCOMING TRANSMISSION...";
-                            }
-                        } else {
-                            statusBar.textContent = "TEXT TRANSMISSION RECEIVED";
-                        }
-
-                        renderSystemCard(msg, false, "INCOMING SIGNAL");
-                    }
-                })
-                .catch(e => console.log("Poll error", e));
+        // Audio logic removed for SitReps as per request.
+        statusBar.textContent = "TEXT TRANSMISSION RECEIVED";
+        renderSystemCard(msg, false, "INCOMING SIGNAL");
+        }
+        })
+        .catch(e => console.log("Poll error", e));
         }, 3000);
 
         // Voice Command Logic
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'en-US';
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
 
-            recordBtn.onclick = () => {
-                if (recordBtn.classList.contains('recording')) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            };
+        recordBtn.onclick = () => {
+        if (recordBtn.classList.contains('recording')) {
+        recognition.stop();
+        } else {
+        recognition.start();
+        }
+        };
 
-            recognition.onstart = () => {
-                recordBtn.classList.add('recording');
-                recordBtn.textContent = "LISTENING...";
-                statusBar.textContent = "MICROPHONE ACTIVE";
-                statusBar.style.color = "#00ff00";
-            };
+        recognition.onstart = () => {
+        recordBtn.classList.add('recording');
+        recordBtn.textContent = "LISTENING...";
+        statusBar.textContent = "MICROPHONE ACTIVE";
+        statusBar.style.color = "#00ff00";
+        };
 
-            recognition.onend = () => {
-                recordBtn.classList.remove('recording');
-                recordBtn.textContent = "INITIATE VOICE COMMAND";
-                if (statusBar.textContent === "MICROPHONE ACTIVE") {
-                    statusBar.textContent = "PROCESSING...";
-                }
-            };
+        recognition.onend = () => {
+        recordBtn.classList.remove('recording');
+        recordBtn.textContent = "INITIATE VOICE COMMAND";
+        if (statusBar.textContent === "MICROPHONE ACTIVE") {
+        statusBar.textContent = "PROCESSING...";
+        }
+        };
 
-            // --- TTS Helper ---
-            function speakResponse(text) {
-                if ('speechSynthesis' in window) {
-                    // Cancel any ongoing speech
-                    window.speechSynthesis.cancel();
+        // --- TTS Helper ---
+        function speakResponse(text) {
+        if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
 
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-                    // Optional: Select a "tech" sounding voice if available
-                    // const voices = window.speechSynthesis.getVoices();
-                    // utterance.voice = voices.find(v => v.name.includes('Google US English')) || voices[0];
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        // Optional: Select a "tech" sounding voice if available
+        // const voices = window.speechSynthesis.getVoices();
+        // utterance.voice = voices.find(v => v.name.includes('Google US English')) || voices[0];
 
-                    window.speechSynthesis.speak(utterance);
-                }
+        window.speechSynthesis.speak(utterance);
+        }
+        }
+
+        recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        lastSentTranscript = transcript;
+        console.log("Transcript:", transcript);
+
+        // 1. Display User Command
+        renderUserCard(transcript);
+        statusBar.textContent = "SENDING TO HQ...";
+
+        // 2. Send to Backend
+        fetch('/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: transcript, user_id: "web_user_01" })
+        })
+        .then(response => response.json())
+        .then(data => {
+        console.log("Response:", data);
+        statusBar.textContent = "RESPONSE RECEIVED";
+
+        const intent = data.intent || {};
+        const toolName = intent.tool_name || "Unknown";
+        const isRefusal = toolName === "refusal";
+
+        // Construct Rich HTML
+        let html = "";
+
+        if (isRefusal) {
+        // Refusal UI
+        const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
+        html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
+        <div>${reason}</div>`;
+
+        speakResponse("Action denied. " + reason);
+        } else {
+        // Success UI
+        html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span
+                style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
+
+        // Add Params
+        if (intent.arguments && Object.keys(intent.arguments).length > 0) {
+        html += `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 5px;">PARAMS:</div>
+        <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; opacity: 0.8;">`;
+            for (const [key, val] of Object.entries(intent.arguments)) {
+            html += `<li>${key}: ${val}</li>`;
             }
+            html += `</ul>`;
+        }
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                lastSentTranscript = transcript;
-                console.log("Transcript:", transcript);
+        // Add overall message if distinct from simple generic message
+        if (data.message && !data.message.startsWith("Executed")) {
+        html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">
+            ${data.message}</div>`;
+        }
 
-                // 1. Display User Command
-                renderUserCard(transcript);
-                statusBar.textContent = "SENDING TO HQ...";
+        // Speak the message
+        speakResponse(data.message || "Command executed.");
+        }
 
-                // 2. Send to Backend
-                fetch('/command', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transcript: transcript, user_id: "web_user_01" })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Response:", data);
-                        statusBar.textContent = "RESPONSE RECEIVED";
+        // 3. Display System Response
+        renderSystemCard(html, isRefusal);
+        })
+        .catch(err => {
+        console.error('Error:', err);
+        statusBar.textContent = "TRANSMISSION FAILED";
+        statusBar.style.color = "red";
+        renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
+        speakResponse("Transmission failed.");
+        });
+        };
 
-                        const intent = data.intent || {};
-                        const toolName = intent.tool_name || "Unknown";
-                        const isRefusal = toolName === "refusal";
-
-                        // Construct Rich HTML
-                        let html = "";
-
-                        if (isRefusal) {
-                            // Refusal UI
-                            const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
-                            html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
-                                <div>${reason}</div>`;
-
-                            speakResponse("Action denied. " + reason);
-                        } else {
-                            // Success UI
-                            html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
-
-                            // Add Params
-                            if (intent.arguments && Object.keys(intent.arguments).length > 0) {
-                                html += `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 5px;">PARAMS:</div>
-                                     <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; opacity: 0.8;">`;
-                                for (const [key, val] of Object.entries(intent.arguments)) {
-                                    html += `<li>${key}: ${val}</li>`;
-                                }
-                                html += `</ul>`;
-                            }
-
-                            // Add overall message if distinct from simple generic message
-                            if (data.message && !data.message.startsWith("Executed")) {
-                                html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">${data.message}</div>`;
-                            }
-
-                            // Speak the message
-                            speakResponse(data.message || "Command executed.");
-                        }
-
-                        // 3. Display System Response
-                        renderSystemCard(html, isRefusal);
-                    })
-                    .catch(err => {
-                        console.error('Error:', err);
-                        statusBar.textContent = "TRANSMISSION FAILED";
-                        statusBar.style.color = "red";
-                        renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
-                        speakResponse("Transmission failed.");
-                    });
-            };
-
-            recognition.onerror = (event) => {
-                statusBar.textContent = "ERROR: " + event.error;
-                statusBar.style.color = "red";
-                recordBtn.classList.remove('recording');
-                recordBtn.textContent = "INITIATE VOICE COMMAND";
-            };
+        recognition.onerror = (event) => {
+        statusBar.textContent = "ERROR: " + event.error;
+        statusBar.style.color = "red";
+        recordBtn.classList.remove('recording');
+        recordBtn.textContent = "INITIATE VOICE COMMAND";
+        };
 
         } else {
-            recordBtn.textContent = "VOICE UNAVAILABLE";
-            recordBtn.disabled = true;
-            renderSystemCard("Warning: Web Speech API not supported in this browser. Voice commands disabled.", true);
+        recordBtn.textContent = "VOICE UNAVAILABLE";
+        recordBtn.disabled = true;
+        renderSystemCard("Warning: Web Speech API not supported in this browser. Voice commands disabled.", true);
         }
-    </script>
+        </script>
 </body>
 
 </html>
