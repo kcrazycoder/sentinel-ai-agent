@@ -6,10 +6,6 @@ import random
 # Run `gcloud run services describe sentinel-ai --format 'value(status.url)'` to get your URL
 # Or set SERVICE_URL environment variable
 import os
-# Configuration
-# Run `gcloud run services describe sentinel-ai --format 'value(status.url)'` to get your URL
-# Or set SERVICE_URL environment variable
-import os
 BASE_URL = "https://sentinel-ai-967479678472.us-central1.run.app"
 
 SCENARIOS = [

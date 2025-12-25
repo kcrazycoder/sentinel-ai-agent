@@ -26,35 +26,50 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
             width: 90%;
-            max-width: 400px;
+            max-width: 600px;
+            /* Widened slightly for better text display */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 400px;
+            justify-content: space-between;
         }
 
         h1 {
             font-size: 1.5rem;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 2px;
+            border-bottom: 1px solid #00ff00;
+            width: 100%;
+            padding-bottom: 10px;
         }
 
         audio {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 10px;
             filter: invert(1);
+            height: 30px;
         }
 
-        .status {
+        /* Status Bar (Meta info like "Listening...") */
+        #status-bar {
             font-size: 0.8rem;
-            margin-top: 10px;
+            margin-bottom: 15px;
             opacity: 0.7;
+            height: 1.2em;
+            width: 100%;
+            text-align: right;
         }
 
         .visualizer {
-            height: 50px;
+            height: 40px;
             display: flex;
             justify-content: center;
             align-items: flex-end;
             gap: 2px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            width: 100%;
         }
 
         .bar {
@@ -71,7 +86,8 @@
             font-family: inherit;
             font-size: 1rem;
             cursor: pointer;
-            margin-top: 20px;
+            width: 100%;
+            margin-top: 10px;
             border-radius: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -98,7 +114,7 @@
             }
 
             50% {
-                transform: scale(1.05);
+                transform: scale(1.02);
             }
 
             100% {
@@ -106,42 +122,71 @@
             }
         }
 
-        /* Help Flyover Styles */
-        .help-btn {
+        /* Flyover Styles */
+        .flyover-btn {
             position: fixed;
             top: 20px;
-            right: 20px;
             background: rgba(0, 255, 0, 0.1);
             color: #00ff00;
             border: 1px solid #00ff00;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            /* Circle */
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             z-index: 1000;
             font-size: 1.2rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .flyover-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        #help-btn {
+            right: 20px;
+        }
+
+        #history-btn {
+            left: 20px;
         }
 
         .flyover {
             position: fixed;
             top: 0;
-            right: -300px;
-            width: 300px;
+            width: 350px;
             height: 100vh;
             background: #111;
-            border-left: 2px solid #00ff00;
             padding: 20px;
             box-sizing: border-box;
-            transition: right 0.3s ease;
+            transition: transform 0.3s ease;
             z-index: 999;
             overflow-y: auto;
+            border-bottom: none;
         }
 
-        .flyover.open {
+        #help-panel {
             right: 0;
+            border-left: 2px solid #00ff00;
+            transform: translateX(100%);
+        }
+
+        #help-panel.open {
+            transform: translateX(0);
+        }
+
+        #history-panel {
+            left: 0;
+            border-right: 2px solid #00ff00;
+            transform: translateX(-100%);
+        }
+
+        #history-panel.open {
+            transform: translateX(0);
         }
 
         .flyover h2 {
@@ -149,38 +194,121 @@
             border-bottom: 1px solid #00ff00;
             padding-bottom: 10px;
             margin-top: 0;
+            text-transform: uppercase;
         }
 
-        .flyover h3 {
-            font-size: 1rem;
-            margin-top: 20px;
-            color: #88ff88;
+        /* Active Display Area */
+        #active-display {
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Start from top */
+            gap: 15px;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+            background: rgba(0, 255, 0, 0.02);
+            border-radius: 5px;
+            margin-bottom: 10px;
         }
 
-        .flyover ul {
-            padding-left: 20px;
+        /* Message Cards */
+        .card {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative;
+            text-align: left;
+            animation: fadeIn 0.3s ease;
         }
 
-        .flyover li {
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-card {
+            border: 1px dashed #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+            margin-right: 20px;
+            align-self: flex-start;
+            width: 80%;
+        }
+
+        .system-card {
+            border: 1px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            margin-left: 20px;
+            align-self: flex-end;
+            width: 80%;
+        }
+
+        .card-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            opacity: 0.7;
             margin-bottom: 5px;
-            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .flyover code {
-            background: #222;
-            padding: 2px 4px;
-            border-radius: 3px;
+        .card-content {
+            font-size: 1rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        /* History Items - Smaller versions of cards */
+        .history-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        .history-timestamp {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            margin-bottom: 5px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #44ff44;
         }
     </style>
 </head>
 
 <body>
-    <button class="help-btn" id="help-btn">?</button>
+    <!-- Buttons -->
+    <button class="flyover-btn" id="help-btn">?</button>
+    <button class="flyover-btn" id="history-btn">H</button>
 
+    <!-- Help Panel -->
     <aside class="flyover" id="help-panel">
         <h2>Command Guide</h2>
         <p>Use voice commands to manage services.</p>
-
         <h3>Basic Commands</h3>
         <ul>
             <li>Restart a service<br><code>"Restart [service_name]"</code></li>
@@ -188,61 +316,79 @@
             <li>Get Status<br><code>"Status of [service]"</code></li>
             <li>Get Logs<br><code>"Show logs for [service]"</code></li>
         </ul>
-
         <h3>Examples</h3>
         <ul>
             <li>"Restart payment gateway"</li>
             <li>"Scale checkout to 5"</li>
             <li>"Status of database"</li>
         </ul>
+    </aside>
 
-        <h3>Troubleshooting</h3>
-        <p>If a command fails, try to be more specific with the service name.</p>
+    <!-- History Panel -->
+    <aside class="flyover" id="history-panel">
+        <h2>Mission Log</h2>
+        <div id="history-list">
+            <!-- Items injected here -->
+            <p style="opacity:0.5; text-align:center; padding:20px;">No logs recorded.</p>
+        </div>
     </aside>
 
     <div class="container">
         <h1>EchoOps Active</h1>
-        <div class="visualizer" id="visualizer">
-            <!-- Bars generated by JS -->
-        </div>
-        <div id="fallback-text"
-            style="font-family: monospace; white-space: pre-wrap; text-align: center; margin: 10px; min-height: 50px; color: #00ff00;">
-        </div>
-        <div id="status" class="status">Waiting for Signal...</div>
 
+        <!-- Status Bar -->
+        <div id="status-bar">SYSTEM ONLINE. WAITING.</div>
+
+        <!-- Main Display (Current Interaction) -->
+        <div id="active-display">
+            <!-- Content will be injected here. e.g.:
+            <div class="card user-card">...</div>
+            <div class="card system-card">...</div>
+            -->
+        </div>
+
+        <!-- Visualizer -->
+        <div class="visualizer" id="visualizer"></div>
+
+        <!-- Inputs -->
         <button id="record-btn">INITIATE VOICE COMMAND</button>
 
         <audio id="player" controls>
             <source src="/static/latest_sitrep.wav" type="audio/wav">
-            Your browser does not support the audio element.
         </audio>
     </div>
 
     <script>
-        // Simple Audio Visualizer Simulation
+        // --- UI Setup ---
         const visualizer = document.getElementById('visualizer');
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) { // Increased bars
             const bar = document.createElement('div');
             bar.className = 'bar';
-            bar.style.height = '10px';
+            bar.style.height = '5px';
             visualizer.appendChild(bar);
         }
 
         const player = document.getElementById('player');
-        const status = document.getElementById('status');
+        const statusBar = document.getElementById('status-bar');
         const recordBtn = document.getElementById('record-btn');
-        const helpBtn = document.getElementById('help-btn');
-        const helpPanel = document.getElementById('help-panel');
+        const activeDisplay = document.getElementById('active-display');
+        const historyList = document.getElementById('history-list');
 
-        // Help Toggle
-        helpBtn.onclick = () => {
-            helpPanel.classList.toggle('open');
+        // Toggle Panels
+        document.getElementById('help-btn').onclick = () => {
+            document.getElementById('help-panel').classList.toggle('open');
+            document.getElementById('history-panel').classList.remove('open');
+        };
+        document.getElementById('history-btn').onclick = () => {
+            document.getElementById('history-panel').classList.toggle('open');
+            document.getElementById('help-panel').classList.remove('open');
         };
 
+        // --- Visualizer Animation ---
         function animate() {
             if (!player.paused) {
                 document.querySelectorAll('.bar').forEach(bar => {
-                    bar.style.height = Math.random() * 40 + 10 + 'px';
+                    bar.style.height = Math.random() * 30 + 5 + 'px';
                 });
             } else {
                 document.querySelectorAll('.bar').forEach(bar => {
@@ -253,94 +399,148 @@
         }
         animate();
 
-        // Typewriter Effect for Text Fallback
-        function typeWriter(text, element, speed = 30) {
-            element.innerHTML = "";
+        // --- Display Logic ---
+
+        // State to track if we have an active "User" context to pair with a "System" response
+        // or if the current display is "stale" and should be archived.
+        let interactionActive = false;
+
+        function addToHistory(htmlContent) {
+            // Remove the "No logs" placeholder if valid
+            if (historyList.querySelector('p')?.textContent.includes('No logs')) {
+                historyList.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'history-item';
+
+            const timestamp = new Date().toLocaleTimeString();
+            item.innerHTML = `<div class="history-timestamp">${timestamp}</div>` + htmlContent;
+
+            // Prepend (Newest at top)
+            historyList.insertBefore(item, historyList.firstChild);
+        }
+
+        function clearActiveDisplay() {
+            if (activeDisplay.children.length > 0) {
+                // Determine what to archive. 
+                // We archive whatever HTML is currently inside active-display
+                const contentToArchive = activeDisplay.innerHTML;
+                addToHistory(contentToArchive);
+            }
+            activeDisplay.innerHTML = '';
+        }
+
+        function renderUserCard(text) {
+            // If interaction was not active (e.g. fresh start), clear any old visible system msg
+            // However, we said "When a new command is received, populate another section".
+            // So YES, always clear previous context when User speaks.
+
+            clearActiveDisplay();
+
+            const card = document.createElement('div');
+            card.className = 'card user-card';
+            card.innerHTML = `
+                <div class="card-label">COMMANDER</div>
+                <div class="card-content">${text}</div>
+            `;
+            activeDisplay.appendChild(card);
+            interactionActive = true;
+
+            // Auto scroll
+            activeDisplay.scrollTop = activeDisplay.scrollHeight;
+        }
+
+        function renderSystemCard(text, isError = false, title = "ECHO_OPS") {
+            // If we are appending to a user command, do NOT clear.
+            // If this is a standalone signal (SitRep) and no user command is currently "pending", 
+            // then we might want to clear the previous stale context.
+
+            if (!interactionActive && activeDisplay.children.length > 0) {
+                // If there's something there but it's not part of this "turn", archive it.
+                clearActiveDisplay();
+            }
+
+            // If we are pairing, we keep the User card and add System card.
+            // Then the interaction is considered "complete" but we leave it visible until NEXT event.
+
+            const card = document.createElement('div');
+            card.className = 'card system-card';
+            if (isError) card.style.borderColor = "#ff0000";
+
+            card.innerHTML = `
+                <div class="card-label">
+                    <span>${title}</span>
+                </div>
+                <div class="card-content"></div>
+            `;
+            activeDisplay.appendChild(card);
+
+            // Typewriter effect
+            const contentDiv = card.querySelector('.card-content');
             let i = 0;
+            const speed = 20;
             function type() {
                 if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
+                    contentDiv.textContent += text.charAt(i);
                     i++;
                     setTimeout(type, speed);
+                    activeDisplay.scrollTop = activeDisplay.scrollHeight;
                 }
             }
             type();
+
+            // Reset interaction flag because turn is done
+            interactionActive = false;
         }
 
-        let lastStatusTime = "";
+        // --- Core Application Logic ---
 
-        // Status Polling Loop
+        let lastStatusTime = "";
+        let lastSentTranscript = "";
+
+        // Status Polling (SitReps / Incidents)
         setInterval(() => {
             fetch('/static/status.json?t=' + new Date().getTime())
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("No status file");
-                    }
-                    return response.json();
-                })
+                .then(r => r.ok ? r.json() : null)
                 .then(data => {
-                    if (data.timestamp !== lastStatusTime) {
+                    if (data && data.timestamp !== lastStatusTime) {
                         lastStatusTime = data.timestamp;
 
-                        // Check Audio Availability
-                        if (data.audio_available) {
-                            status.textContent = "TRANSMITTING SITREP...";
-                            status.style.color = "#00ff00";
-                            player.src = "/static/latest_sitrep.wav?t=" + new Date().getTime(); // Cache bust
-                            player.play().catch(e => console.log("Auto-play blocked"));
+                        // This is a new event from System.
+                        // If it's audio, play it.
+                        // Render card.
 
-                            // Clear text fallback
-                            document.getElementById('fallback-text').innerHTML = "";
-                        } else {
-                            // Text Fallback Mode
-                            status.textContent = "AUDIO LINK OFFLINE. TEXT TRANSMISSION RECEIVED.";
-                            status.style.color = "#ffaa00"; // Orange for warning
+                        let msg = data.text;
+                        if (!msg) return;
 
-                            // Typewriter effect for the SitRep
-                            const fallbackContainer = document.getElementById('fallback-text');
-                            typeWriter(data.text, fallbackContainer);
+                        // Filter out echoes of our own commands (handled by direct response)
+                        if (msg.startsWith("COMMAND RECEIVED") && lastSentTranscript && msg.includes(lastSentTranscript)) {
+                            console.log("Skipping self-echo status update");
+                            return;
                         }
+
+                        // If audio available, auto play
+                        if (data.audio_available) {
+                            player.src = "/static/latest_sitrep.wav?t=" + new Date().getTime();
+                            player.play().catch(e => console.log("Autoplay blocked"));
+                            statusBar.textContent = "INCOMING TRANSMISSION...";
+                        } else {
+                            statusBar.textContent = "TEXT TRANSMISSION RECEIVED";
+                        }
+
+                        renderSystemCard(msg, false, "INCOMING SIGNAL");
                     }
                 })
-                .catch(err => {
-                    // Graceful handling for initial state (file missing)
-                    if (status.textContent === "Waiting for Signal...") {
-                        // Do nothing, keep waiting
-                    } else if (err.message === "No status file") {
-                        console.log("Status file unavailable.");
-                        // Clear text fallback if it was showing something
-                        document.getElementById('fallback-text').innerHTML = "";
-                    } else {
-                        console.log("Status poll error", err);
-                    }
-                });
+                .catch(e => console.log("Poll error", e));
         }, 3000);
 
-        player.onplay = () => {
-            // Only update if not already playing a specific state to avoid flickering
-            if (!status.textContent.includes("TRANSMITTING")) {
-                // status.textContent = "TRANSMITTING SITREP..."; 
-                // Let the polling handle the status text updates mostly
-            }
-        };
-        player.onended = () => {
-            status.textContent = "CHANNEL OPEN. WAITING FOR COMMAND.";
-            status.style.color = "#00ff00";
-        };
-
-        // Auto-play attempt (Browser may block)
-        player.play().catch(e => {
-            status.textContent = "CLICK PLAY TO INITIALIZE";
-        });
-
-        // --- Voice Command Logic (Web Speech API) ---
+        // Voice Command Logic
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             const recognition = new SpeechRecognition();
-
             recognition.continuous = false;
             recognition.lang = 'en-US';
-            recognition.interimResults = false;
 
             recordBtn.onclick = () => {
                 if (recordBtn.classList.contains('recording')) {
@@ -353,71 +553,63 @@
             recognition.onstart = () => {
                 recordBtn.classList.add('recording');
                 recordBtn.textContent = "LISTENING...";
-                status.textContent = "LISTENING FOR COMMAND...";
-                status.style.color = "#00ff00";
+                statusBar.textContent = "MICROPHONE ACTIVE";
+                statusBar.style.color = "#00ff00";
             };
 
             recognition.onend = () => {
                 recordBtn.classList.remove('recording');
                 recordBtn.textContent = "INITIATE VOICE COMMAND";
+                if (statusBar.textContent === "MICROPHONE ACTIVE") {
+                    statusBar.textContent = "PROCESSING...";
+                }
             };
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
-                status.textContent = `SENDING: "${transcript}"`;
+                lastSentTranscript = transcript;
                 console.log("Transcript:", transcript);
 
-                // Send to Backend
+                // 1. Display User Command
+                renderUserCard(transcript);
+                statusBar.textContent = "SENDING TO HQ...";
+
+                // 2. Send to Backend
                 fetch('/command', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        transcript: transcript,
-                        user_id: "web_user_01"
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transcript: transcript, user_id: "web_user_01" })
                 })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("Command Response:", data);
+                        console.log("Response:", data);
+                        statusBar.textContent = "RESPONSE RECEIVED";
 
-                        if (data.message) {
-                            // Use centralized message from backend
-                            status.textContent = data.message;
-                            if (data.intent && data.intent.tool_name === "refusal") {
-                                status.style.color = "#ffaa00";
-                            } else {
-                                status.style.color = "#00ff00";
-                            }
-                        } else {
-                            // Fallback legacy
-                            status.textContent = "COMMAND PROCESSED (No message)";
-                        }
+                        const message = data.message || "Command Processed.";
+                        const isError = (data.intent && data.intent.tool_name === "refusal");
 
-                        // Reset button
-                        recordBtn.classList.remove('recording');
-                        recordBtn.textContent = "INITIATE VOICE COMMAND";
+                        // 3. Display System Response
+                        renderSystemCard(message, isError);
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        status.textContent = "COMMAND FAILED.";
-                        status.style.color = "#ff0000";
+                    .catch(err => {
+                        console.error('Error:', err);
+                        statusBar.textContent = "TRANSMISSION FAILED";
+                        statusBar.style.color = "red";
+                        renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
                     });
             };
 
             recognition.onerror = (event) => {
-                console.error("Speech Recognition Error", event.error);
-                status.textContent = "MICROPHONE ERROR: " + event.error;
-                status.style.color = "#ff0000";
+                statusBar.textContent = "ERROR: " + event.error;
+                statusBar.style.color = "red";
                 recordBtn.classList.remove('recording');
                 recordBtn.textContent = "INITIATE VOICE COMMAND";
             };
 
         } else {
-            recordBtn.textContent = "VOICE NOT SUPPORTED";
+            recordBtn.textContent = "VOICE UNAVAILABLE";
             recordBtn.disabled = true;
-            console.log("Web Speech API not supported in this browser.");
+            renderSystemCard("Warning: Web Speech API not supported in this browser. Voice commands disabled.", true);
         }
     </script>
 </body>
