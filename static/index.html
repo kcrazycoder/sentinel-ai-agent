@@ -303,7 +303,7 @@
 <body>
     <!-- Buttons -->
     <button class="flyover-btn" id="help-btn">?</button>
-    <button class="flyover-btn" id="history-btn">H</button>
+    <button class="flyover-btn" id="history-btn">L</button>
 
     <!-- Help Panel -->
     <aside class="flyover" id="help-panel">
@@ -375,14 +375,30 @@
         const historyList = document.getElementById('history-list');
 
         // Toggle Panels
-        document.getElementById('help-btn').onclick = () => {
+        // Toggle Panels
+        const toggleHelp = () => {
             document.getElementById('help-panel').classList.toggle('open');
             document.getElementById('history-panel').classList.remove('open');
         };
-        document.getElementById('history-btn').onclick = () => {
+        const toggleHistory = () => {
             document.getElementById('history-panel').classList.toggle('open');
             document.getElementById('help-panel').classList.remove('open');
         };
+
+        document.getElementById('help-btn').onclick = toggleHelp;
+        document.getElementById('history-btn').onclick = toggleHistory;
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            if (e.key.toLowerCase() === 'l') {
+                toggleHistory();
+            }
+            if (e.key === '?') {
+                toggleHelp();
+            }
+        });
 
         // --- Visualizer Animation ---
         function animate() {
