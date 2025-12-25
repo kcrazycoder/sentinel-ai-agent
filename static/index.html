@@ -395,12 +395,6 @@
             }
         });
 
-        // Visualizer (Static for now or simulated random)
-        // Since player is gone, we can simple remove the animation or just make it idle.
-        // Let's keep it static low.
-        document.querySelectorAll('.bar').forEach(bar => {
-            bar.style.height = '5px';
-        });
 
         // --- Display Logic ---
 
@@ -534,6 +528,23 @@
                 }
             };
 
+            // --- Visualizer Logic ---
+            let isSpeaking = false;
+
+            function animate() {
+                if (isSpeaking) {
+                    document.querySelectorAll('.bar').forEach(bar => {
+                        bar.style.height = Math.random() * 30 + 5 + 'px';
+                    });
+                } else {
+                    document.querySelectorAll('.bar').forEach(bar => {
+                        bar.style.height = '5px';
+                    });
+                }
+                requestAnimationFrame(animate);
+            }
+            animate(); // Start loop
+
             // --- TTS Helper ---
             function speakResponse(text) {
                 if ('speechSynthesis' in window) {
@@ -543,9 +554,25 @@
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.rate = 1.0;
                     utterance.pitch = 1.0;
-                    // Optional: Select a "tech" sounding voice if available
-                    // const voices = window.speechSynthesis.getVoices();
-                    // utterance.voice = voices.find(v => v.name.includes('Google US English')) || voices[0];
+
+                    utterance.onstart = () => {
+                        isSpeaking = true;
+                        statusBar.textContent = "TRANSMITTING VOICE RESPONSE...";
+                        statusBar.style.color = "#00ff00";
+                    };
+
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        // Reset status logic handled by other events usually, 
+                        // but we can set to generic online status or leave last message.
+                        if (statusBar.textContent === "TRANSMITTING VOICE RESPONSE...") {
+                            statusBar.textContent = "SYSTEM ONLINE. WAITING.";
+                        }
+                    };
+
+                    utterance.onerror = () => {
+                        isSpeaking = false;
+                    };
 
                     window.speechSynthesis.speak(utterance);
                 }
