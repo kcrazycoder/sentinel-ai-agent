@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import time
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -39,6 +40,19 @@ app = FastAPI(title="EchoOps Service")
 # Mount Static Files for the Dashboard Widget
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.on_event("startup")
+async def startup_event():
+    """Ensure status.json exists on startup to prevent 404s."""
+    status_path = os.path.join("static", "status.json")
+    if not os.path.exists(status_path):
+        with open(status_path, "w") as f:
+            json.dump({
+                "text": "Waiting for Signal...",
+                "audio_available": False,
+                "timestamp": str(time.time())
+            }, f)
+        logger.info("Created default status.json")
 
 # Initialize Gemini
 try:
@@ -119,7 +133,7 @@ async def datadog_webhook(payload: dict):
             
             if audio_bytes:
                 # Save to static folder
-                audio_filename = "latest_sitrep.mp3"
+                audio_filename = "latest_sitrep.wav"
                 file_path = os.path.join("static", audio_filename)
                 with open(file_path, "wb") as f:
                     f.write(audio_bytes)
@@ -226,8 +240,31 @@ async def process_voice_command(cmd: VoiceCommand):
             logger.warning(f"Failed to parse intent JSON: {intent_str}")
             intent_dict = {"error": "parsing_failed", "raw": intent_str}
 
+        # Construct Feedback Message
+        message = ""
+        if tool_name == "refusal":
+            # Robust extraction of reason
+            reason = "Unknown reason"
+            args = intent_dict.get("arguments", {})
+            if isinstance(args, dict):
+                reason = args.get("reason", intent_dict.get("reason", "Unknown reason"))
+            elif isinstance(args, str):
+                reason = args
+            message = f"Command Refused: {reason}"
+        elif tool_name:
+            args_str = ", ".join([f"{k}={v}" for k, v in intent_dict.get("arguments", {}).items()])
+            message = f"Executed {tool_name}"
+            if args_str:
+                message += f" ({args_str})"
+        else:
+            message = "Command Processed (No specific tool identified)"
+
         # Mock Execution
-        return {"status": "executed", "intent": intent_dict}
+        return {
+            "status": "executed", 
+            "intent": intent_dict,
+            "message": message
+        }
 
     except Exception as e:
         logger.error(f"Command Processing Failed: {e}")
@@ -265,6 +302,48 @@ async def process_voice_command(cmd: VoiceCommand):
 
         except Exception as tel_e:
             logger.warning(f"Telemetry Error: {tel_e}")
+
+@app.get("/debug/audio")
+def debug_audio():
+    """
+    Debug endpoint to verify voice generation configuration and execution.
+    """
+    try:
+        # Check Config
+        provider = os.getenv("VOICE_PROVIDER", "elevenlabs").lower().strip()
+        google_key = os.getenv("GOOGLE_API_KEY", "").strip()
+        eleven_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+        
+        config_status = {
+            "VOICE_PROVIDER": provider,
+            "GOOGLE_API_KEY_PRESENT": bool(google_key),
+            "ELEVENLABS_API_KEY_PRESENT": bool(eleven_key),
+            "GOOGLE_API_KEY_LENGTH": len(google_key) if google_key else 0
+        }
+
+        # Attempt Generation
+        logger.info(f"Debug Audio: Attempting generation with provider={provider}")
+        start_time = time.time()
+        audio_content = generate_voice("This is a test of the EchoOps audio system.")
+        duration = time.time() - start_time
+        
+        result = {
+            "config": config_status,
+            "generation_attempt": {
+                "success": bool(audio_content),
+                "bytes": len(audio_content) if audio_content else 0,
+                "duration_seconds": round(duration, 2)
+            }
+        }
+        
+        if not audio_content:
+             result["error"] = "Generation failed. Check logs for details."
+             
+        return result
+        
+    except Exception as e:
+        logger.error(f"Debug endpoint failed: {e}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

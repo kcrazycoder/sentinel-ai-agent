@@ -1,1 +1,0 @@
-{"text": "Attention. High latency detected in Payment Gateway. Logs show 502 Bad Gateway errors from the Payment Gateway itself, with the database pool timing out on connections. This indicates a downstream dependency issue.", "audio_available": false, "timestamp": "now"}

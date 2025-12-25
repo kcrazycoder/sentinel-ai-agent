@@ -47,3 +47,5 @@ dd-trace-py/
 
 # Generated Files
 service.yaml
+static/status.json
+static/*.mp3

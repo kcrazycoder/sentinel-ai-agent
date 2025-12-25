@@ -68,6 +68,8 @@ if [ -f .env ]; then
   # Better: Read key-by-key for known keys.
   export DD_API_KEY=$(grep -v '^#' .env | grep 'DD_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
   export ELEVENLABS_API_KEY=$(grep -v '^#' .env | grep 'ELEVENLABS_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+  export GOOGLE_API_KEY=$(grep -v '^#' .env | grep 'GOOGLE_API_KEY' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
+  export VOICE_PROVIDER=$(grep -v '^#' .env | grep 'VOICE_PROVIDER' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
   export DD_SITE=$(grep -v '^#' .env | grep 'DD_SITE' | cut -d '=' -f2 | tr -d '"' | tr -d "'")
   
   # Format remaining env vars as YAML list items for the APP container
@@ -82,7 +84,8 @@ if [ -f .env ]; then
        [[ "$key" == "DD_ENV" ]] || [[ "$key" == "DD_VERSION" ]] || \
        [[ "$key" == "DD_LOGS_INJECTION" ]] || [[ "$key" == "DD_LLMOBS_ENABLED" ]] || \
        [[ "$key" == "DD_LLMOBS_ML_APP" ]] || [[ "$key" == "DD_APP_KEY" ]] || \
-       [[ "$key" == "ELEVENLABS_API_KEY" ]]; then
+       [[ "$key" == "ELEVENLABS_API_KEY" ]] || [[ "$key" == "GOOGLE_API_KEY" ]] || \
+       [[ "$key" == "VOICE_PROVIDER" ]]; then
        continue
     fi
     # Clean value

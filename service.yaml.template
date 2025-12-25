@@ -40,7 +40,11 @@ spec:
         - name: DD_LLMOBS_ML_APP
           value: "${DD_LLMOBS_ML_APP}"
         - name: ELEVENLABS_API_KEY
-          value: "${ELEVENLABS_API_KEY}"${APP_ENV_VARS_BLOCK}
+          value: "${ELEVENLABS_API_KEY}"
+        - name: GOOGLE_API_KEY
+          value: "${GOOGLE_API_KEY}"
+        - name: VOICE_PROVIDER
+          value: "${VOICE_PROVIDER}"${APP_ENV_VARS_BLOCK}
             
       - image: gcr.io/datadoghq/agent:latest
         name: datadog-agent
