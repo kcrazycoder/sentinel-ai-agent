@@ -2,7 +2,7 @@
 
 **EchoOps** is an ambient computing interface for DevOps. It transforms Datadog from a visual dashboard into an **active voice participant** in your war room.
 
-By chaining **Datadog Signals**, **Google Gemini 1.5 Pro**, and **ElevenLabs**, EchoOps allows engineers to *hear* the root cause of an incident and *speak* the remediation, drastically reducing Mean Time To Resolution (MTTR).
+By chaining **Datadog Signals**, **Google Gemini 2.5 Flash Lite**, and **ElevenLabs**, EchoOps allows engineers to *hear* the root cause of an incident and *speak* the remediation, drastically reducing Mean Time To Resolution (MTTR).
 
 > 🏆 Built for the **AI Partner Catalyst Hackathon**.
 
@@ -69,7 +69,7 @@ To deploy the hosted application:
 ## 🎧 Demo Walkthrough
 
 1.  **Open the Console**: Navigate to `http://localhost:8000/static/index.html`. This is your "Headless Console".
-2.  **Trigger Alert**: Send a mock webhook to simulation an incident:
+2.  **Trigger Alert**: Send a mock webhook to simulate an incident:
     ```bash
     curl -X POST "http://localhost:8000/webhook/datadog" \
          -H "Content-Type: application/json" \

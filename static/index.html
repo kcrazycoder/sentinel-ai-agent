@@ -354,6 +354,15 @@
         <button id="record-btn">INITIATE VOICE COMMAND</button>
     </div>
 
+    <!-- Overlay for Audio Initialization -->
+    <div id="init-overlay"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #00ff00;">
+        <h1 style="text-align:center; border: none; font-size: 2rem; margin-bottom: 20px;">ECHO_OPS // INITIALIZE</h1>
+        <button id="init-btn"
+            style="background: transparent; border: 2px solid #00ff00; color: #00ff00; padding: 15px 30px; font-family: inherit; font-size: 1.2rem; cursor: pointer; text-transform: uppercase;">CONNECT
+            TO SYSTEM</button>
+    </div>
+
     <script>
         // --- UI Setup ---
         const visualizer = document.getElementById('visualizer');
@@ -368,8 +377,62 @@
         const recordBtn = document.getElementById('record-btn');
         const activeDisplay = document.getElementById('active-display');
         const historyList = document.getElementById('history-list');
+        const initOverlay = document.getElementById('init-overlay');
+        const initBtn = document.getElementById('init-btn');
 
-        // Toggle Panels
+        // --- Audio Player & Visualizer Logic (Global) ---
+        // Defined early to ensure handlers can access it
+        const audioPlayer = new Audio();
+        let isSpeaking = false;
+
+        audioPlayer.onplay = () => {
+            isSpeaking = true;
+            statusBar.textContent = "INCOMING TRANSMISSION...";
+            statusBar.style.color = "#00ff00";
+        };
+        audioPlayer.onended = () => {
+            isSpeaking = false;
+            statusBar.textContent = "SYSTEM ONLINE. WAITING.";
+        };
+        audioPlayer.onerror = (e) => {
+            console.error("Audio playback error", e);
+            isSpeaking = false;
+        };
+
+        function animate() {
+            if (isSpeaking) {
+                document.querySelectorAll('.bar').forEach(bar => {
+                    bar.style.height = Math.random() * 30 + 5 + 'px';
+                });
+            } else {
+                document.querySelectorAll('.bar').forEach(bar => {
+                    bar.style.height = '5px';
+                });
+            }
+            requestAnimationFrame(animate);
+        }
+        animate(); // Start loop
+
+        // --- Audio Initialization / Auto-Play Fix ---
+        let audioContextUnlocked = false;
+
+        initBtn.onclick = () => {
+            // Unlock audio on user interaction
+            if (audioPlayer) {
+                audioPlayer.load(); // Dummy load
+                audioPlayer.play().then(() => {
+                    audioPlayer.pause();
+                    audioPlayer.currentTime = 0;
+                }).catch(e => console.log("Silent unlock failed (might be fine):", e));
+            }
+            audioContextUnlocked = true;
+            initOverlay.style.display = 'none';
+            renderSystemCard("Audio Uplink Established. System Online.", false);
+        };
+
+        // Hide overlay immediately if user has already interacted (e.g. refresh with cache?)
+        // Actually, just always show it on fresh load to be safe and "cool".
+
         // Toggle Panels
         const toggleHelp = () => {
             document.getElementById('help-panel').classList.toggle('open');
@@ -473,30 +536,52 @@
         let lastStatusTime = "";
         let lastSentTranscript = "";
 
-        // Status Polling (SitReps / Incidents)
+        // --- Status Poll for Audio ---
+        // Replaces previous simpler poll
         setInterval(() => {
             fetch('/static/status.json?t=' + new Date().getTime())
                 .then(r => r.ok ? r.json() : null)
                 .then(data => {
-                    if (data && data.timestamp !== lastStatusTime) {
+                    if (!data) return;
+
+                    // Check for new Audio
+                    if (data.audio_available && data.audio_url) {
+                        // Simple check: if audio URL differs or timestamp differs significantly
+                        // We use a local tracker to avoid re-playing
+                        if (window.lastPlayedAudio !== data.audio_url) {
+                            console.log("New Audio Detected:", data.audio_url);
+                            window.lastPlayedAudio = data.audio_url;
+                            audioPlayer.src = data.audio_url;
+
+                            if (audioContextUnlocked) {
+                                audioPlayer.play().catch(e => {
+                                    console.warn("Play failed despite unlock:", e);
+                                    // Maybe fallback UI?
+                                });
+                            } else {
+                                console.warn("Audio detected but context locked. Waiting for interaction.");
+                            }
+                        }
+                    }
+
+                    // Check for new Text (Status updates)
+                    if (data.timestamp !== lastStatusTime) {
                         lastStatusTime = data.timestamp;
 
                         let msg = data.text;
                         if (!msg) return;
 
-                        // Filter out echoes of our own commands (handled by direct response)
+                        // Filter out echoes of our own commands if we just sent them
                         if (msg.startsWith("COMMAND RECEIVED") && lastSentTranscript && msg.includes(lastSentTranscript)) {
-                            console.log("Skipping self-echo status update");
-                            return;
+                            console.log("Syncing status update...");
+                        } else {
+                            renderSystemCard(msg, false, "INCOMING SIGNAL");
                         }
-
-                        // Audio logic removed for SitReps as per request.
-                        statusBar.textContent = "TEXT TRANSMISSION RECEIVED";
-                        renderSystemCard(msg, false, "INCOMING SIGNAL");
                     }
                 })
                 .catch(e => console.log("Poll error", e));
-        }, 3000);
+        }, 1000); // Poll faster for audio responsiveness
+
 
         // Voice Command Logic
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -527,56 +612,6 @@
                     statusBar.textContent = "PROCESSING...";
                 }
             };
-
-            // --- Visualizer Logic ---
-            let isSpeaking = false;
-
-            function animate() {
-                if (isSpeaking) {
-                    document.querySelectorAll('.bar').forEach(bar => {
-                        bar.style.height = Math.random() * 30 + 5 + 'px';
-                    });
-                } else {
-                    document.querySelectorAll('.bar').forEach(bar => {
-                        bar.style.height = '5px';
-                    });
-                }
-                requestAnimationFrame(animate);
-            }
-            animate(); // Start loop
-
-            // --- TTS Helper ---
-            function speakResponse(text) {
-                if ('speechSynthesis' in window) {
-                    // Cancel any ongoing speech
-                    window.speechSynthesis.cancel();
-
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-
-                    utterance.onstart = () => {
-                        isSpeaking = true;
-                        statusBar.textContent = "TRANSMITTING VOICE RESPONSE...";
-                        statusBar.style.color = "#00ff00";
-                    };
-
-                    utterance.onend = () => {
-                        isSpeaking = false;
-                        // Reset status logic handled by other events usually, 
-                        // but we can set to generic online status or leave last message.
-                        if (statusBar.textContent === "TRANSMITTING VOICE RESPONSE...") {
-                            statusBar.textContent = "SYSTEM ONLINE. WAITING.";
-                        }
-                    };
-
-                    utterance.onerror = () => {
-                        isSpeaking = false;
-                    };
-
-                    window.speechSynthesis.speak(utterance);
-                }
-            }
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
@@ -610,8 +645,6 @@
                             const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
                             html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
         <div>${reason}</div>`;
-
-                            speakResponse("Action denied. " + reason);
                         } else {
                             // Success UI
                             html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span
@@ -632,20 +665,18 @@
                                 html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">
             ${data.message}</div>`;
                             }
-
-                            // Speak the message
-                            speakResponse(data.message || "Command executed.");
                         }
 
-                        // 3. Display System Response
+                        // 3. Display System Response (Text Immediately)
                         renderSystemCard(html, isRefusal);
+
+                        // Audio will play via polling when ready.
                     })
                     .catch(err => {
                         console.error('Error:', err);
                         statusBar.textContent = "TRANSMISSION FAILED";
                         statusBar.style.color = "red";
                         renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
-                        speakResponse("Transmission failed.");
                     });
             };
 

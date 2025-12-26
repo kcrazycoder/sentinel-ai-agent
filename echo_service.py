@@ -2,7 +2,7 @@ import logging
 import os
 import json
 import time
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -85,7 +85,7 @@ def health_check():
     return {"status": "operational", "system": "EchoOps"}
 
 @app.post("/webhook/datadog")
-async def datadog_webhook(payload: dict):
+async def datadog_webhook(payload: dict, background_tasks: BackgroundTasks):
     """
     Receives alerts from Datadog.
     1. Extracts context.
@@ -127,24 +127,16 @@ async def datadog_webhook(payload: dict):
             
             logger.info(f"Generated SitRep: {sitrep_script}")
             
-            # 4. Generate Voice (DISABLED REQUEST)
-            # audio_bytes = generate_voice(sitrep_script)
-            audio_path = None
+            # 4. Generate Voice (Enabled)
+            from voice_handler import FEMALE_VOICE_ID
+            voice_provider = os.getenv("SITREPS_VOICE_PROVIDER", "elevenlabs")
+            background_tasks.add_task(generate_command_audio, sitrep_script, FEMALE_VOICE_ID, voice_provider)
             
-            # if audio_bytes:
-            #     # Save to static folder
-            #     audio_filename = "latest_sitrep.wav"
-            #     file_path = os.path.join("static", audio_filename)
-            #     with open(file_path, "wb") as f:
-            #         f.write(audio_bytes)
-            #     audio_path = f"/static/{audio_filename}"
-            #     logger.info(f"Audio saved to {file_path}")
-            
-            # Write Status for Frontend (Fallback Support)
+            # Write Initial Status (Before audio is ready)
             import json
             status_data = {
-                "text": sitrep_script,
-                "audio_available": False, # Explicitly disabled
+                "text": sitrep_script, # Display text immediately
+                "audio_available": False, 
                 "timestamp": str(payload.get("timestamp", "now"))
             }
             with open(os.path.join("static", "status.json"), "w") as f:
@@ -153,7 +145,7 @@ async def datadog_webhook(payload: dict):
             return {
                 "status": "processed", 
                 "sitrep": sitrep_script,
-                "audio_url": audio_path
+                "audio_queued": True
             }
             
         except Exception as e:
@@ -171,10 +163,48 @@ async def suspend_webhook(request: Request):
     logger.info(f"Suspend Webhook Received: {body.decode()}")
     return {"status": "suspended"}
 
+
+
+from voice_handler import DEFAULT_VOICE_ID
+
+def generate_command_audio(text: str, voice_id: str = DEFAULT_VOICE_ID, provider: str = None):
+    """
+    Background task to generate audio and update status.json
+    """
+    logger.info(f"Starting background audio generation for: {text[:30]}... (Voice: {voice_id}, Provider: {provider})")
+    try:
+        audio_bytes = generate_voice(text, voice_id, provider)
+        if audio_bytes:
+            audio_filename = f"response_{int(time.time())}.wav"
+            file_path = os.path.join("static", audio_filename)
+            with open(file_path, "wb") as f:
+                f.write(audio_bytes)
+            
+            # Update status.json so frontend picks it up
+            # We need to be careful not to overwrite a *newer* status, but for this single-stream demo it's acceptable.
+            # To be safer, we read, check timestamp, then write? 
+            # Or just write a specific "audio_update" status.
+            
+            # Simplest approach for hackathon: Update global status with audio link.
+            status_data = {
+                "text": text, # Re-iterate text
+                "audio_available": True,
+                "audio_url": f"/static/{audio_filename}",
+                "timestamp": str(time.time()) # Update timestamp to trigger frontend fetch
+            }
+            with open(os.path.join("static", "status.json"), "w") as f:
+                json.dump(status_data, f)
+            logger.info(f"Audio ready: {audio_filename}")
+        else:
+             logger.warning("Background audio generation failed (no bytes returned).")
+    except Exception as e:
+        logger.error(f"Background audio task failed: {e}")
+
 @app.post("/command")
-async def process_voice_command(cmd: VoiceCommand):
+async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundTasks):
     """
     Process a voice transcript, validate intent, and execute tool.
+    Returns text immediately; queues audio generation.
     """
     logger.info(f"Processing Command: {cmd.transcript}")
     
@@ -228,9 +258,10 @@ async def process_voice_command(cmd: VoiceCommand):
             logger.warning(f"Failed to parse intent JSON: {intent_str}")
             intent_dict = {"error": "parsing_failed", "raw": intent_str}
 
-        # Construct Feedback Message
+        # Construct Feedback Message (and Audio Script)
         message = ""
         tool_name = intent_dict.get("tool_name") # Re-get tool_name in case of parsing error
+        
         if tool_name == "refusal":
             # Robust extraction of reason
             reason = "Unknown reason"
@@ -240,28 +271,35 @@ async def process_voice_command(cmd: VoiceCommand):
             elif isinstance(args, str):
                 reason = args
             message = f"Command Refused: {reason}"
+            audio_script = f"Action denied. {reason}"
         elif tool_name:
             args_str = ", ".join([f"{k}={v}" for k, v in intent_dict.get("arguments", {}).items()])
             message = f"Executed {tool_name}"
             if args_str:
                 message += f" ({args_str})"
+            audio_script = f"Executing {tool_name}. {args_str}." # Simple confirmation
         else:
             message = "Command Processed (No specific tool identified)"
+            audio_script = "Command processed."
 
-        # Update Frontend Dashboard (With rich info)
+        # Update Frontend Dashboard IMMEDIATE (Text Only)
         try:
             status_text = f"COMMAND RECEIVED: {cmd.transcript}\nACTION: {tool_name or 'UNKNOWN'}\nRESULT: {message}"
             status_data = {
                 "text": status_text,
-                "audio_available": False,
-                "timestamp": str(os.times()[4])
+                "audio_available": False, 
+                "timestamp": str(time.time())
             }
             with open(os.path.join("static", "status.json"), "w") as f:
                 json.dump(status_data, f)
         except Exception as e:
             logger.error(f"Failed to update dashboard status: {e}")
 
-        # Mock Execution
+        # Queue Audio Generation
+        voice_provider = os.getenv("COMMANDS_VOICE_PROVIDER", "elevenlabs")
+        background_tasks.add_task(generate_command_audio, audio_script, DEFAULT_VOICE_ID, voice_provider)
+
+        # Return Immediate Response
         return {
             "status": "executed", 
             "intent": intent_dict,
@@ -275,28 +313,16 @@ async def process_voice_command(cmd: VoiceCommand):
     finally:
         # 4. Telemetry: Token Usage & Cost
         try:
-            # Note: actual usage metadata depends on the specific LangChain integration version and response structure.
-            # providing a robust fallback if usage_metadata is missing.
-            usage = None
-            if hasattr(chain, "last_response") and hasattr(chain.last_response, "usage_metadata"):
-                 usage = chain.last_response.usage_metadata
-            
-            # Since we are using a simple chain | invoke, getting the raw response object to extract metadata 
-            # might require a different approach (e.g. callbacks). 
-            # For this simplified agent, we will estimate or Mock if we can't easily grab it without refactoring the chain.
-            # HOWEVER, ChatGoogleGenerativeAI responses usually contain usage_metadata in the raw output.
-            # Let's try to get it if we can, otherwise we will estimate based on string length (1 token ~= 4 chars)
-            
             # Estimation Fallback (SAFE)
             input_tokens = len(cmd.transcript) // 4
-            output_tokens = 50 # Avg for intent JSON
+            output_tokens = 50 
             
             # Report to Datadog
             statsd.increment('echo_ops.llm.tokens.prompt', value=input_tokens, tags=["model:gemini-2.5-flash-lite"])
             statsd.increment('echo_ops.llm.tokens.completion', value=output_tokens, tags=["model:gemini-2.5-flash-lite"])
             statsd.increment('echo_ops.llm.tokens.total', value=input_tokens + output_tokens, tags=["model:gemini-2.5-flash-lite"])
             
-            # Cost Estimation (Hypothetical pricing for Flash Lite: $0.0001 per 1k input, $0.0002 per 1k output)
+            # Cost Estimation
             cost = (input_tokens / 1000 * 0.0001) + (output_tokens / 1000 * 0.0002)
             statsd.gauge('echo_ops.llm.cost', cost, tags=["model:gemini-2.5-flash-lite"])
             
