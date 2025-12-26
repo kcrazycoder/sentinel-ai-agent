@@ -1,0 +1,58 @@
+{
+    "data": [
+        {
+            "type": "slo",
+            "attributes": {
+                "name": "EchoOps Availability (99.9%)",
+                "description": "Ensure the EchoOps Voice Command system is reachable and processing requests without errors.",
+                "tags": [
+                    "service:sentinel-ai",
+                    "env:production",
+                    "team:sre"
+                ],
+                "monitor_ids": [],
+                "thresholds": [
+                    {
+                        "target": 99.9,
+                        "target_display": "99.9",
+                        "timeframe": "7d",
+                        "warning": 99.95,
+                        "warning_display": "99.95"
+                    }
+                ],
+                "type": "metric",
+                "query": {
+                    "numerator": "sum:trace.fastapi.request.hits{service:sentinel-ai}.as_count() - sum:trace.fastapi.request.errors{service:sentinel-ai}.as_count()",
+                    "denominator": "sum:trace.fastapi.request.hits{service:sentinel-ai}.as_count()"
+                }
+            }
+        },
+        {
+            "type": "slo",
+            "attributes": {
+                "name": "EchoOps Latency (99% < 1s)",
+                "description": "Voice commands must be processed instantly. Responses slower than 1s degrade user experience.",
+                "tags": [
+                    "service:sentinel-ai",
+                    "env:production",
+                    "team:sre"
+                ],
+                "monitor_ids": [],
+                "thresholds": [
+                    {
+                        "target": 99,
+                        "target_display": "99.0",
+                        "timeframe": "7d",
+                        "warning": 99.5,
+                        "warning_display": "99.5"
+                    }
+                ],
+                "type": "metric",
+                "query": {
+                    "numerator": "sum:echo_ops.latency.satisfactory{service:sentinel-ai}.as_count()",
+                    "denominator": "sum:trace.fastapi.request.hits{service:sentinel-ai}.as_count()"
+                }
+            }
+        }
+    ]
+}

@@ -37,7 +37,7 @@ GOOGLE_CLOUD_PROJECT="your-project-id"
 DD_API_KEY="your_dd_api_key"
 DD_APP_KEY="your_dd_app_key"
 DD_SITE="datadoghq.com"
-DD_SERVICE="echo-ops"
+DD_SERVICE="sentinel-ai"
 DD_ENV="production"
 DD_LOGS_INJECTION=true
 
@@ -126,6 +126,7 @@ python trigger_incident.py --stop-chaos
 ## 📊 Datadog Artifacts
 
 -   `datadog_export.json`: Import this to create the **EchoOps War Room** dashboard.
+-   `datadog_slo.json`: Import this to create the **Service Level Objectives** (Availability & Latency).
 -   `datadog_monitors/*.json`: Import these to create the detection rules.
 - 'Sentinel AI Agent': Organization name on the Datadog Platform
 

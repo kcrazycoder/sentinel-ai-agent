@@ -284,6 +284,14 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
             logger.warning(f"Failed to parse intent JSON: {intent_str}")
             intent_dict = {"error": "parsing_failed", "raw": intent_str}
 
+        # Metric Instrumentation: Latency SLO
+        duration = time.time() - start_time
+        statsd.gauge('echo_ops.latency', duration, tags=["service:sentinel-ai"])
+        
+        # "Satisfactory" metric for SLO (1 if <1s, 0 if >1s)
+        is_satisfactory = 1 if duration < 1.0 else 0
+        statsd.increment('echo_ops.latency.satisfactory', value=is_satisfactory, tags=["service:sentinel-ai"])
+
         # Construct Feedback Message (and Audio Script)
         message = ""
         tool_name = intent_dict.get("tool_name") # Re-get tool_name in case of parsing error
