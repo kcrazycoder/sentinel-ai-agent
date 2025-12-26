@@ -200,12 +200,38 @@ def generate_command_audio(text: str, voice_id: str = DEFAULT_VOICE_ID, provider
     except Exception as e:
         logger.error(f"Background audio task failed: {e}")
 
+# --- Chaos Engineering ---
+CHAOS_MODE = False
+
+@app.post("/chaos/start")
+async def start_chaos():
+    global CHAOS_MODE
+    CHAOS_MODE = True
+    logger.warning("CHAOS MODE ACTIVATED: Latency injection enabled.")
+    return {"status": "chaos_started", "latency_injection": "enabled"}
+
+@app.post("/chaos/stop")
+async def stop_chaos():
+    global CHAOS_MODE
+    CHAOS_MODE = False
+    logger.info("CHAOS MODE DEACTIVATED: Latency injection disabled.")
+    return {"status": "chaos_stopped"}
+
 @app.post("/command")
 async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundTasks):
     """
     Process a voice transcript, validate intent, and execute tool.
     Returns text immediately; queues audio generation.
     """
+    global CHAOS_MODE
+    
+    # 0. Chaos Injection
+    if CHAOS_MODE:
+        # Simulate high latency (2.5s - 4.0s) to trip Datadog monitors
+        delay = random.uniform(2.5, 4.0)
+        logger.warning(f"Chaos Mode: Injecting {delay:.2f}s latency...")
+        time.sleep(delay)
+
     logger.info(f"Processing Command: {cmd.transcript}")
     
     if not llm:

@@ -57,5 +57,58 @@ def run_traffic():
             # 2s delay between commands
             time.sleep(2)
 
+def run_chaos_test():
+    print(f"🔥 STARTING CHAOS TEST targeting {BASE_URL}...")
+    
+    # 1. Enable Chaos
+    try:
+        requests.post(f"{BASE_URL}/chaos/start")
+        print(">> Chaos Mode ENABLED on Server.")
+    except Exception as e:
+        print(f"Error starting chaos: {e}")
+        return
+
+    # 2. Burst Traffic to trigger High Latency Monitor
+    # Datadog usually needs a few minutes of bad data.
+    print(">> Generating High Latency Traffic (Ctrl+C to stop)...")
+    
+    try:
+        count = 0
+        while True:
+            scenario = random.choice(SCENARIOS)
+            print(f"[{count+1}] Sending: {scenario['transcript']}...", end=" ", flush=True)
+            
+            t0 = time.time()
+            try:
+                payload = {"transcript": scenario['transcript'], "user_id": "chaos_bot"}
+                resp = requests.post(f"{BASE_URL}/command", json=payload)
+                duration = time.time() - t0
+                print(f"Status: {resp.status_code} | Time: {duration:.2f}s")
+            except Exception as e:
+                print(f"Failed: {e}")
+            
+            count += 1
+            # Short sleep to keep throughput high enough to register as "traffic"
+            # but relies on backend latency to trip "Avg Latency"
+            time.sleep(0.5) 
+            
+            if count >= 50: # Run for ~2-3 mins of traffic effectively
+                print(">> Batch complete. Continung...")
+                
+    except KeyboardInterrupt:
+        print("\n>> Stopping Chaos Test.")
+    
+    # 3. Disable Chaos
+    try:
+        requests.post(f"{BASE_URL}/chaos/stop")
+        print(">> Chaos Mode DISABLED on Server.")
+    except Exception as e:
+        print(f"Error stopping chaos: {e}")
+
 if __name__ == "__main__":
-    run_traffic()
+    # check for env argument or simple toggle
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--chaos":
+        run_chaos_test()
+    else:
+        run_traffic()

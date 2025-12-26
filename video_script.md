@@ -12,7 +12,7 @@ This video demonstrates EchoOps, a voice-enabled observability platform. The nar
 *   **Visual**: Screen recording. Quiet, clean screen. Suddenly, a Datadog Dashboard appears (The EchoOps War Room). It has a futuristic glowing visualizer.
 *   **Action**: A "High Latency" alert triggers on the dashboard.
 *   **System Voice (ElevenLabs)**: *Clear, calm voice* "Attention. High latency detected in Payment Gateway Service. 95th percentile response time is 2.4 seconds. Correlated logs indicate a timeout in the Database Connection Pool. Recommendation: Restart the service or scale up read replicas."
-*   **Voiceover**: "Meet EchoOps. The system that speaks. By integrating Datadog Webhooks with Gemini 1.5 Pro and ElevenLabs, we transform static alerts into intelligent Situation Reports."
+*   **Voiceover**: "Meet EchoOps. The system that speaks. By integrating Datadog Webhooks with Gemini Flash Lite and ElevenLabs, we transform static alerts into intelligent Situation Reports."
 
 ## Scene 3: The Architecture & Response (Duration: 0:45)
 *   **Visual**: Architecture diagram overlay (Datadog -> Webhook -> Python/FastAPI -> Gemini -> ElevenLabs -> Dashboard).
