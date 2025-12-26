@@ -224,6 +224,7 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
     Returns text immediately; queues audio generation.
     """
     global CHAOS_MODE
+    start_time = time.time()
     
     # 0. Chaos Injection
     if CHAOS_MODE:

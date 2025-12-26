@@ -3,6 +3,7 @@
     "description": "Real-time Incident Response Dashboard with Voice Integration",
     "widgets": [
         {
+            "id": 403776854463989,
             "definition": {
                 "type": "iframe",
                 "url": "https://sentinel-ai-967479678472.us-central1.run.app/static/index.html"
@@ -11,17 +12,25 @@
                 "x": 0,
                 "y": 0,
                 "width": 6,
-                "height": 4
+                "height": 6
             }
         },
         {
+            "id": 7828285239014048,
             "definition": {
+                "title": "System Detection Rules (Monitors)",
                 "type": "manage_status",
-                "summary_type": "monitors",
+                "display_format": "countsAndList",
+                "color_preference": "text",
+                "hide_zero_counts": false,
+                "show_status": true,
+                "last_triggered_format": "relative",
                 "query": "service:sentinel-ai",
                 "sort": "status,asc",
-                "title": "System Detection Rules (Monitors)",
-                "hide_zero_counts": false,
+                "count": 50,
+                "start": 0,
+                "summary_type": "monitors",
+                "show_priority": false,
                 "show_last_triggered": true
             },
             "layout": {
@@ -32,28 +41,18 @@
             }
         },
         {
+            "id": 4942483500555814,
             "definition": {
-                "title": "Latency Heatmap",
-                "type": "trace_service",
-                "env": "production",
-                "service": "sentinel-ai",
-                "span_name": "agent.thought",
-                "show_breakdown": true
-            },
-            "layout": {
-                "x": 0,
-                "y": 4,
-                "width": 6,
-                "height": 4
-            }
-        },
-        {
-            "definition": {
-                "title": "Safety: Refusals (Refusal/Block)",
-                "type": "timeseries",
+                "title": "",
+                "title_size": "16",
+                "title_align": "left",
+                "type": "slo_summary",
                 "requests": [
                     {
-                        "q": "sum:echo_ops.intent.refusal{service:sentinel-ai}.as_count()"
+                        "request_type": "slo_summary",
+                        "query": {
+                            "query_string": ""
+                        }
                     }
                 ]
             },
@@ -61,40 +60,163 @@
                 "x": 6,
                 "y": 4,
                 "width": 6,
-                "height": 4
+                "height": 2
             }
         },
         {
+            "id": 8944581223606942,
             "definition": {
                 "title": "LLM Usage (Tokens)",
+                "show_legend": false,
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "sum:echo_ops.llm.tokens.total{service:sentinel-ai}.as_count()"
+                        "response_format": "timeseries",
+                        "queries": [
+                            {
+                                "data_source": "metrics",
+                                "name": "query1",
+                                "query": "sum:echo_ops.llm.tokens.total{service:sentinel-ai}.as_count()"
+                            }
+                        ]
                     }
                 ]
             },
             "layout": {
                 "x": 0,
-                "y": 8,
+                "y": 6,
                 "width": 6,
                 "height": 4
             }
         },
         {
+            "id": 6605847492799305,
+            "definition": {
+                "title": "",
+                "title_size": "16",
+                "title_align": "left",
+                "time": {},
+                "type": "slo",
+                "slo_id": "47d52cf94e6459d0af1c1f508ac96742",
+                "view_type": "detail",
+                "view_mode": "overall",
+                "time_windows": [
+                    "7d",
+                    "week_to_date",
+                    "previous_week"
+                ],
+                "show_error_budget": true
+            },
+            "layout": {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 2
+            }
+        },
+        {
+            "id": 8330924614615301,
+            "definition": {
+                "title": "",
+                "title_size": "16",
+                "title_align": "left",
+                "time": {},
+                "type": "slo",
+                "slo_id": "a28dd4ce29835efb805970d7eea2a092",
+                "view_type": "detail",
+                "view_mode": "overall",
+                "time_windows": [
+                    "7d",
+                    "week_to_date",
+                    "previous_week"
+                ],
+                "show_error_budget": true
+            },
+            "layout": {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 2
+            }
+        },
+        {
+            "id": 3781714638577871,
+            "definition": {
+                "title": "Safety: Refusals (Refusal/Block)",
+                "show_legend": false,
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "response_format": "timeseries",
+                        "queries": [
+                            {
+                                "data_source": "metrics",
+                                "name": "query1",
+                                "query": "sum:echo_ops.intent.refusal{service:sentinel-ai}.as_count()"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "layout": {
+                "x": 0,
+                "y": 10,
+                "width": 6,
+                "height": 4
+            }
+        },
+        {
+            "id": 3211159212890825,
+            "definition": {
+                "title": "Latency Heatmap",
+                "time": {},
+                "type": "trace_service",
+                "env": "production",
+                "service": "sentinel-ai",
+                "span_name": "agent.thought",
+                "show_hits": false,
+                "show_errors": false,
+                "show_latency": false,
+                "show_breakdown": true,
+                "size_format": "medium",
+                "display_format": "one_column"
+            },
+            "layout": {
+                "x": 6,
+                "y": 10,
+                "width": 6,
+                "height": 4
+            }
+        },
+        {
+            "id": 8982485405037676,
             "definition": {
                 "title": "Error Rate (Actionable Signals)",
+                "time": {},
                 "type": "query_value",
                 "requests": [
                     {
-                        "q": "sum:trace.fastapi.request.errors{service:sentinel-ai}.as_count()"
+                        "response_format": "scalar",
+                        "queries": [
+                            {
+                                "data_source": "metrics",
+                                "name": "query1",
+                                "query": "sum:trace.fastapi.request.errors{service:sentinel-ai}.as_count()",
+                                "aggregator": "avg"
+                            }
+                        ],
+                        "formulas": [
+                            {
+                                "formula": "query1"
+                            }
+                        ]
                     }
                 ],
                 "autoscale": true
             },
             "layout": {
-                "x": 6,
-                "y": 8,
+                "x": 0,
+                "y": 14,
                 "width": 6,
                 "height": 4
             }
