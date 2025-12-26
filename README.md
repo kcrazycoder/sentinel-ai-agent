@@ -66,6 +66,47 @@ To deploy the hosted application:
 3.  Follow the prompts to enter your Project ID. The script will build the container and deploy to Cloud Run.
 4.  Once complete, it will output the **Hosted Application URL**.
 
+## 🧪 Data Generation & Incidents
+
+### Traffic Generator
+Simulate user traffic to the service to generate traces and metrics in Datadog.
+
+**1. Normal Mode (Default)**
+Sends a mix of valid, invalid, and refusal commands to simulate typical user activity.
+```bash
+python traffic_generator.py
+```
+
+**2. Chaos Mode**
+Sends a continuous burst of commands to generate high-volume metrics. Use this in conjunction with the incident trigger's chaos start to trip High Latency monitors.
+```bash
+python traffic_generator.py --chaos
+```
+
+### Incident Control (`trigger_incident.py`)
+Control how incidents are generated for the demo.
+
+**1. Simulate an Incident (Default)**
+Sends a **Webhook Payload** to EchoOps, simulating a Datadog alert instantly. Useful for testing the "Speak" functionality without waiting for Datadog.
+```bash
+python trigger_incident.py
+# or
+python trigger_incident.py --simulate
+```
+
+**2. Real Anomaly Detection (Chaos Mode)**
+Injects artificial latency (2.5s - 4.0s) into the backend to trip *real* Datadog monitors.
+```bash
+# Start Chaos (Enable Latency)
+python trigger_incident.py --start-chaos
+
+# Run Traffic (to generate bad metrics)
+python traffic_generator.py --chaos
+
+# Stop Chaos (Restore Normalcy)
+python trigger_incident.py --stop-chaos
+```
+
 ## 🎧 Demo Walkthrough
 
 1.  **Open the Console**: Navigate to `http://localhost:8000/static/index.html`. This is your "Headless Console".
