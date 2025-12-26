@@ -58,7 +58,7 @@ def run_traffic():
             time.sleep(2)
 
 def run_chaos_test():
-    print(f"🔥 STARTING CHAOS TEST targeting {BASE_URL}...")
+    print(f"STARTING CHAOS TEST targeting {BASE_URL}...")
     
     # 1. Enable Chaos
     try:
@@ -84,6 +84,8 @@ def run_chaos_test():
                 resp = requests.post(f"{BASE_URL}/command", json=payload)
                 duration = time.time() - t0
                 print(f"Status: {resp.status_code} | Time: {duration:.2f}s")
+                if resp.status_code != 200:
+                     print(f"ERROR BODY: {resp.text}")
             except Exception as e:
                 print(f"Failed: {e}")
             

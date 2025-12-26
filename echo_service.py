@@ -2,6 +2,8 @@ import logging
 import os
 import json
 import time
+import asyncio
+import random
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -227,11 +229,13 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
     start_time = time.time()
     
     # 0. Chaos Injection
+    start_time = time.time()
+    
     if CHAOS_MODE:
         # Simulate high latency (2.5s - 4.0s) to trip Datadog monitors
         delay = random.uniform(2.5, 4.0)
         logger.warning(f"Chaos Mode: Injecting {delay:.2f}s latency...")
-        time.sleep(delay)
+        await asyncio.sleep(delay)
 
     logger.info(f"Processing Command: {cmd.transcript}")
     
