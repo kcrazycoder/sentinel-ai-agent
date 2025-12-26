@@ -127,6 +127,7 @@ python trigger_incident.py --stop-chaos
 
 -   `datadog_export.json`: Import this to create the **EchoOps War Room** dashboard.
 -   `datadog_monitors/*.json`: Import these to create the detection rules.
+- 'Sentinel AI Agent': Organization name on the Datadog Platform
 
 ## 📄 License
 MIT License
