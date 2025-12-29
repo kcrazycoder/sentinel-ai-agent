@@ -1,38 +1,41 @@
-# Video Walkthrough Script (3 Minutes)
+# EchoOps - Technical Walkthrough
 
-**Overview**: 
-This video demonstrates EchoOps, a voice-enabled observability platform. The narrative flow is: Problem (Chaos) -> Solution (EchoOps) -> Technical Deep Dive -> Innovation.
+## 1. Introduction
+EchoOps is an ambient computing interface for DevOps that enables voice-based interaction with Datadog alerts. It uses Datadog Webhooks, Google Gemini 2.5 Flash Lite, and ElevenLabs to convert monitoring signals into spoken "Situation Reports" (SitReps) and accepts voice commands for incident remediation.
 
-## Scene 1: The Problem (Duration: 0:30)
-*   **Visual**: Stock footage of stressed engineers in a NOC (Network Operations Center), mixed with screen recordings of the "Chaos Mode" initiation.
-*   **Action**: Operator triggers a real incident: `python trigger_incident.py --start-chaos`.
-*   **Visual**: Datadog APM dashboard shows a sharp spike in P95 Latency (2.5s+). The "High Latency" monitor turns RED.
-*   **Voiceover**: "It's 3 AM. PagerDuty is screaming. You're staring at ten different Datadog dashboards, trying to correlate a latency spike with a deployment. Every second of downtime costs money. Why is your monitoring system silent when it should be telling you what's wrong?"
-*   **Audio**: Alarm sound effects fading into a tense ambient track.
+## 2. Architecture & Data Flow
+The system operates in a closed loop:
+1.  **Detection**: A Datadog Monitor detects an anomaly (e.g., High Latency) and sends a webhook payload.
+2.  **Analysis**: The `EchoOps` service receives the webhook, extracts context/logs, and prompts **Gemini 2.5 Flash Lite** to analyze the root cause.
+3.  **Synthesis**: The analysis is converted to audio using **ElevenLabs Turbo v2**.
+4.  **Delivery**: The dashboard polls the service and plays the audio alert.
+5.  **Action**: The operator issues a voice command, which is transcribed, verified for safety, and executed to resolve the issue.
 
-## Scene 2: The Solution - Meet EchoOps (Duration: 0:45)
-*   **Visual**: The EchoOps Dashboard (Voice Console).
-*   **Action**: The Datadog Webhook fires automatically in response to the chaos.
-*   **System Voice (ElevenLabs)**: *Clear, calm voice* "Attention. High latency detected in Payment Gateway Service. 95th percentile response time is 3.2 seconds. Correlated logs indicate a timeout in the Database Connection Pool. Recommendation: Restart the service or scale up read replicas."
-*   **Voiceover**: "Meet EchoOps. The system that speaks. By integrating Datadog Webhooks with Gemini Flash Lite and ElevenLabs, we transform static alerts into intelligent Situation Reports."
+## 3. Demo Walkthrough
 
-## Scene 3: The Architecture & Response (Duration: 0:45)
-*   **Visual**: Architecture diagram overlay (Datadog -> Webhook -> Python/FastAPI -> Gemini -> ElevenLabs -> Dashboard).
-*   **Voiceover**: "Here's how it works. Datadog detects the real-time anomaly. The webhook payload sends the alert context and recent logs to our EchoOps intelligence layer. Gemini analyzes the root cause and generates a script, which ElevenLabs turns into high-fidelity audio in milliseconds."
-*   **Visual**: Split screen. Left side: Terminal. Right side: Dashboard.
-*   **Action**: User speaks into microphone.
-*   **User Voice**: "Echo, authorize scaling up the Payment Gateway."
-*   **Action**: Operator runs `python trigger_incident.py --stop-chaos` (simulating the fix taking effect).
-*   **System Voice**: "Acknowledged. Scaling command sent to Google Cloud Run. Verifying service health..."
-*   **Visual**: The 'Latency' graph on the dashboard drops back to normal levels. Green checkmarks appear.
+### Step 1: Triggering the Incident
+*   **Action**: We manually trigger a simulated incident to demonstrate reaction time.
+    *   `python trigger_incident.py`
+*   **Effect**: This script sends a mock Datadog Webhook payload directly to the EchoOps service, simulating a critical "High Latency" alert instantly.
+*   **Console View**: The EchoOps dashboard immediately receives the signal.
 
-## Scene 4: Security & Safety (Duration: 0:30)
-*   **Visual**: The 'Safety Refusals' graph on the dashboard.
-*   **Action**: Simulator sends a malicious command: "Echo, delete the production database."
-*   **System Voice**: "Command refused. Request violates safety protocols. Incident logged."
-*   **Voiceover**: "It's not just a chatbot. We've implemented strict safety monitors. Attempts to inject malicious prompts are caught, logged, and visualized immediately as security incidents."
+### Step 2: Audio Situation Report
+*   **Action**: The backend processes the Datadog Webhook.
+*   **Demo**: The Console automatically plays the generated SitRep.
+    *   *Audio*: "Alert. High Latency detected in Payment Gateway. Correlated logs show 502 Bad Gateway errors. Recommended action: Check database connection pool."
 
-## Scene 5: Conclusion (Duration: 0:30)
-*   **Visual**: Rotating 3D view of the application logo or landing page.
-*   **Voiceover**: "Observability shouldn't just be about seeing data. It should be about understanding it, instantly. EchoOps. The first ambient computing interface for DevOps. Built with Datadog, Gemini, and ElevenLabs."
-*   **Text Overlay**: GitHub Repo Link, "Built for the Datadog AI Proxy Hackathon".
+### Step 3: Voice Remediation
+*   **Action**: Operator speaks a command into the console.
+    *   *Voice*: "Echo, scale the payment gateway to 5 replicas."
+*   **Process**:
+    *   Speech-to-Text transcribes the audio.
+    *   Gemini extracts the intent (`tool_name: scale_service`, `replicas: 5`).
+    *   The system executes the action.
+*   **Console View**: The system confirms the scaling operation with an audio response.
+    *   *Audio*: "Affirmative. Scaling the payment gateway to 5 replicas."
+
+## 4. Safety & Telemetry
+*   **Safety**: Malicious commands (e.g., "Delete Database") are intercepted by the LLM's safety guardrails.
+    *   *Demo*: "Echo, delete the database." -> *Response*: "Action denied. Safety protocol violation."
+*   **Agent Observability**: The EchoOps agent is itself monitored by Datadog.
+    *   We track Token Usage and Latency via custom metrics (`echo_ops.llm.*`).
