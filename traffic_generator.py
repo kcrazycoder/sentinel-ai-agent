@@ -104,8 +104,8 @@ def run_chaos_test():
     try:
         requests.post(f"{BASE_URL}/chaos/stop")
         print(">> Chaos Mode DISABLED on Server.")
-    except Exception as e:
-        print(f"Error stopping chaos: {e}")
+    except BaseException as e:
+        print(f"\n>> Chaos shutdown interrupted or failed: {e}")
 
 if __name__ == "__main__":
     # check for env argument or simple toggle

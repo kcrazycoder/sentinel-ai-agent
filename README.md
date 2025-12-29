@@ -96,14 +96,22 @@ python trigger_incident.py --simulate
 
 **2. Real Anomaly Detection (Chaos Mode)**
 Injects artificial latency (2.5s - 4.0s) into the backend to trip *real* Datadog monitors.
+**Option A: Automated Chaos Test (Recommended)**
+Runs a self-contained test that enables chaos, generates traffic, and then disables chaos.
 ```bash
-# Start Chaos (Enable Latency)
+python traffic_generator.py --chaos
+```
+
+**Option B: Manual Control**
+Manually toggle latency injection and run standard traffic.
+```bash
+# 1. Enable Latency
 python trigger_incident.py --start-chaos
 
-# Run Traffic (to generate bad metrics)
-python traffic_generator.py --chaos
+# 2. Run Standard Traffic (Will be slow)
+python traffic_generator.py
 
-# Stop Chaos (Restore Normalcy)
+# 3. Disable Latency
 python trigger_incident.py --stop-chaos
 ```
 
