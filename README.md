@@ -13,6 +13,23 @@ By chaining **Datadog Signals**, **Google Gemini 2.5 Flash Lite**, and **ElevenL
 -   **Active Remediation**: Accepts voice commands (simulated via API) to trigger infrastructure changes.
 -   **Observability First**: Full `ddtrace` integration for every voice generation step.
 
+## 🧠 How It Works
+    
+The system operates in a closed loop with Datadog:
+    
+### 1. The Ingest Flow (Traffic → Datadog)
+*   **Traces**: The service uses `ddtrace` to automatically report every request to Datadog APM.
+*   **Metrics**: Custom counters (e.g., `echo_ops.intent.refusal`) are sent using `statsd`, immediately populating dashboards.
+    
+### 2. The Trigger Flow (Datadog → EchoOps)
+*   **Alert**: A Datadog Monitor (e.g., Latency > 500ms) detects an anomaly.
+*   **Webhook**: The Monitor hits the `.../webhook/datadog` endpoint, waking up the EchoOps service.
+    
+### 3. The Response Flow (EchoOps → Datadog)
+*   **Analysis**: EchoOps analyzes the alert, fetches logs, and uses **Gemini** to generate a "Situation Report" (SitRep).
+*   **Voice**: **ElevenLabs** converts the SitRep into high-fidelity audio.
+*   **Dashboard**: The **EchoOps Widget** polls the service and automatically speaks the alert to the SRE team.
+    
 ## 🛠️ Architecture
 
 1.  **Trigger**: Datadog Monitor sends a Webhook to EchoOps.
@@ -137,6 +154,30 @@ python trigger_incident.py --stop-chaos
 -   `datadog_exports/datadog_slo.json`: Import this to create the **Service Level Objectives** (Availability & Latency).
 -   `datadog_exports/*.json`: Import these to create the detection rules.
 - 'Sentinel AI Agent': Organization name on the Datadog Platform
+
+
+
+## 📸 Observability & Evidence
+
+The EchoOps "War Room" Dashboard provides real-time visibility into the system's cognitive and operational health.
+
+### 1. The War Room (Chaos Mode Active)
+![War Room Dashboard](assets/war_room_mode.png)
+*   **Active Alerts**: The dashboard successfully captured the "Chaos Mode" test.
+    *   **Refusal Alert**: Triggered by the "malicious" scenario (e.g., dropping the database).
+    *   **High Latency**: Triggered by the artificial delay injection (2.5s - 4.0s).
+
+### 2. The Diagnosis (SLO Breach)
+![SLO Breach](assets/slo_breach.png)
+*   **Initial State**: The "Latency SLO" was failing catastrophically (0.1% success).
+*   **Investigation**: Using the **Metric Explorer**, we compared `trace.fastapi.request.hits` (Total) vs `echo_ops.latency.satisfactory` (Good).
+![Metric Debugging](assets/metric_debugging.png)
+*   **Root Cause**: The "Total" metric included thousands of low-latency polling requests (`GET /status.json`) that were not emitting the "Success" tag, effectively counting them as failures in the "Apples vs Oranges" comparison.
+
+### 3. The Fix (Telemetry Correction)
+![Telemetry Fix](assets/telemetry_fix.png)
+*   **Resolution**: We implemented a backend fix (`echo_ops.latency.total`) to distinctively track *Command Latency* vs. *Polling Traffic*.
+*   **True Latency**: The corrected graph shows a **25% Success Rate** (<1s) for voice generation. This confirms that while the application is functional, the GenAI + TTS pipeline inherently requires ~2-3s.
 
 ## 📄 License
 MIT License
