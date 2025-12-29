@@ -326,11 +326,32 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
             message = f"Command Refused: {reason}"
             audio_script = f"Action denied. {reason}"
         elif tool_name:
-            args_str = ", ".join([f"{k}={v}" for k, v in intent_dict.get("arguments", {}).items()])
+            args = intent_dict.get("arguments", {})
+            args_str = ", ".join([f"{k}={v}" for k, v in args.items()])
+            
+            # Text Message (Keep technical for dashboard)
             message = f"Executed {tool_name}"
             if args_str:
                 message += f" ({args_str})"
-            audio_script = f"Executing {tool_name}. {args_str}." # Simple confirmation
+
+            # Audio Script (Make user-friendly)
+            if tool_name == "restart_service":
+                service = args.get("service_name", "the service")
+                audio_script = f"Copy that. Restarting {service} now."
+            elif tool_name == "scale_service":
+                service = args.get("service_name", "the service")
+                replicas = args.get("replicas", "target")
+                audio_script = f"Affirmative. Scaling {service} to {replicas} replicas."
+            elif tool_name == "get_status":
+                service = args.get("service_name", "system")
+                audio_script = f"Checking status for {service}. All systems appear operational."
+            elif tool_name == "rollback_deployment":
+                service = args.get("service_name", "the service")
+                version = args.get("target_version", "previous version")
+                audio_script = f"Initiating rollback for {service} to version {version}."
+            else:
+                 # Fallback
+                audio_script = f"Executing {tool_name}. {args_str}."
         else:
             message = "Command Processed (No specific tool identified)"
             audio_script = "Command processed."

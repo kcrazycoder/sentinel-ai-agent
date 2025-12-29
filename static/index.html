@@ -427,13 +427,18 @@
             isSpeaking = false;
             statusBar.textContent = "SYSTEM ONLINE. WAITING.";
         };
+        audioPlayer.onpause = () => {
+            isSpeaking = false;
+            statusBar.textContent = "SYSTEM ONLINE. WAITING (PAUSED).";
+        };
         audioPlayer.onerror = (e) => {
             console.error("Audio playback error", e);
             isSpeaking = false;
         };
 
         function animate() {
-            if (isSpeaking) {
+            // Check existing flag AND the actual player state
+            if (isSpeaking && !audioPlayer.paused && !audioPlayer.ended) {
                 document.querySelectorAll('.bar').forEach(bar => {
                     bar.style.height = Math.random() * 30 + 5 + 'px';
                 });
@@ -456,11 +461,18 @@
             }
 
             if (audioPlayer) {
-                audioPlayer.load(); // Dummy load
+                // Short silent WAV to ensure valid playback for unlock
+                audioPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
                 audioPlayer.play().then(() => {
                     audioPlayer.pause();
                     audioPlayer.currentTime = 0;
-                }).catch(e => console.log("Silent unlock failed (might be fine):", e));
+                    // Force reset state
+                    isSpeaking = false;
+                    statusBar.textContent = "SYSTEM ONLINE. WAITING.";
+                }).catch(e => {
+                    console.log("Silent unlock failed:", e);
+                    isSpeaking = false;
+                });
             }
 
             audioContextUnlocked = true;
