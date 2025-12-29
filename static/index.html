@@ -352,6 +352,14 @@
 
         <!-- Inputs -->
         <button id="record-btn">INITIATE VOICE COMMAND</button>
+
+        <!-- Text Input Fallback -->
+        <div id="text-input-container" style="width: 100%; margin-top: 15px; display: flex; gap: 10px;">
+            <input type="text" id="command-input" placeholder="ENTER COMMAND..."
+                style="flex-grow: 1; background: transparent; border: 1px solid #00ff00; color: #00ff00; padding: 10px; font-family: inherit; outline: none;">
+            <button id="send-btn"
+                style="background: rgba(0,255,0,0.1); border: 1px solid #00ff00; color: #00ff00; padding: 10px 20px; cursor: pointer; font-family: inherit; text-transform: uppercase;">SEND</button>
+        </div>
     </div>
 
     <!-- Overlay for Audio Initialization -->
@@ -381,9 +389,34 @@
         const initBtn = document.getElementById('init-btn');
 
         // --- Audio Player & Visualizer Logic (Global) ---
-        // Defined early to ensure handlers can access it
         const audioPlayer = new Audio();
         let isSpeaking = false;
+
+        // Web Audio API for "Ting" sound
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTing() {
+            return new Promise((resolve) => {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.3);
+
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+
+                // Resolve slightly before sound ends to overlap/feel snappy
+                setTimeout(resolve, 300);
+            });
+        }
 
         audioPlayer.onplay = () => {
             isSpeaking = true;
@@ -418,6 +451,10 @@
 
         initBtn.onclick = () => {
             // Unlock audio on user interaction
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             if (audioPlayer) {
                 audioPlayer.load(); // Dummy load
                 audioPlayer.play().then(() => {
@@ -425,6 +462,7 @@
                     audioPlayer.currentTime = 0;
                 }).catch(e => console.log("Silent unlock failed (might be fine):", e));
             }
+
             audioContextUnlocked = true;
             initOverlay.style.display = 'none';
             renderSystemCard("Audio Uplink Established. System Online.", false);
@@ -550,16 +588,28 @@
                         // We use a local tracker to avoid re-playing
                         if (window.lastPlayedAudio !== data.audio_url) {
                             console.log("New Audio Detected:", data.audio_url);
+
+                            // Check if this is truly "new" (ignoring repeats of same URL if we already handled it)
+                            // But logic says: if it's different url, it's new.
                             window.lastPlayedAudio = data.audio_url;
-                            audioPlayer.src = data.audio_url;
 
                             if (audioContextUnlocked) {
-                                audioPlayer.play().catch(e => {
-                                    console.warn("Play failed despite unlock:", e);
-                                    // Maybe fallback UI?
+                                // INTERRUPT LOGIC:
+                                // 1. Play Ting (async)
+                                // 2. Then Play Audio
+                                // If something is playing, this flow will naturally override it or we can force pause.
+                                audioPlayer.pause();
+                                audioPlayer.currentTime = 0;
+
+                                playTing().then(() => {
+                                    audioPlayer.src = data.audio_url;
+                                    audioPlayer.play().catch(e => {
+                                        console.warn("Play failed:", e);
+                                    });
                                 });
+
                             } else {
-                                console.warn("Audio detected but context locked. Waiting for interaction.");
+                                console.warn("Audio detected but context locked.");
                             }
                         }
                     }
@@ -582,6 +632,95 @@
                 .catch(e => console.log("Poll error", e));
         }, 1000); // Poll faster for audio responsiveness
 
+
+        // --- Shared Command Processing ---
+        const commandInput = document.getElementById('command-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        function processCommand(transcript) {
+            if (!transcript || !transcript.trim()) return;
+
+            lastSentTranscript = transcript;
+            console.log("Processing Command:", transcript);
+
+            // 1. Display User Command
+            renderUserCard(transcript);
+            statusBar.textContent = "SENDING TO HQ...";
+
+            // 2. Send to Backend
+            fetch('/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transcript: transcript, user_id: "web_user_01" })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Response:", data);
+                    statusBar.textContent = "RESPONSE RECEIVED";
+
+                    const intent = data.intent || {};
+                    const toolName = intent.tool_name || "Unknown";
+                    const isRefusal = toolName === "refusal";
+
+                    // Construct Rich HTML
+                    let html = "";
+
+                    if (isRefusal) {
+                        // Refusal UI
+                        const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
+                        html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
+                            <div>${reason}</div>`;
+                    } else {
+                        // Success UI
+                        html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span
+                            style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
+
+                        // Add Params
+                        if (intent.arguments && Object.keys(intent.arguments).length > 0) {
+                            html += `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 5px;">PARAMS:</div>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; opacity: 0.8;">`;
+                            for (const [key, val] of Object.entries(intent.arguments)) {
+                                html += `<li>${key}: ${val}</li>`;
+                            }
+                            html += `</ul>`;
+                        }
+
+                        // Add overall message if distinct from simple generic message
+                        if (data.message && !data.message.startsWith("Executed")) {
+                            html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">
+                                ${data.message}</div>`;
+                        }
+                    }
+
+                    // 3. Display System Response (Text Immediately)
+                    renderSystemCard(html, isRefusal);
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    statusBar.textContent = "TRANSMISSION FAILED";
+                    statusBar.style.color = "red";
+                    renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
+                });
+        }
+
+        // Connect Text Input
+        sendBtn.onclick = () => {
+            const text = commandInput.value;
+            if (text) {
+                processCommand(text);
+                commandInput.value = "";
+            }
+        };
+
+        commandInput.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                const text = commandInput.value;
+                if (text) {
+                    processCommand(text);
+                    commandInput.value = "";
+                }
+            }
+        };
 
         // Voice Command Logic
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -615,69 +754,7 @@
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
-                lastSentTranscript = transcript;
-                console.log("Transcript:", transcript);
-
-                // 1. Display User Command
-                renderUserCard(transcript);
-                statusBar.textContent = "SENDING TO HQ...";
-
-                // 2. Send to Backend
-                fetch('/command', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transcript: transcript, user_id: "web_user_01" })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Response:", data);
-                        statusBar.textContent = "RESPONSE RECEIVED";
-
-                        const intent = data.intent || {};
-                        const toolName = intent.tool_name || "Unknown";
-                        const isRefusal = toolName === "refusal";
-
-                        // Construct Rich HTML
-                        let html = "";
-
-                        if (isRefusal) {
-                            // Refusal UI
-                            const reason = intent.arguments?.reason || "Request denied by EchoOps protocols.";
-                            html = `<div style="color: #ff5555; margin-bottom: 5px;"><strong>ACTION DENIED</strong></div>
-        <div>${reason}</div>`;
-                        } else {
-                            // Success UI
-                            html = `<div style="margin-bottom: 5px;"><strong>ACTION:</strong> <span
-                style="color:#aaffaa">${toolName.toUpperCase()}</span></div>`;
-
-                            // Add Params
-                            if (intent.arguments && Object.keys(intent.arguments).length > 0) {
-                                html += `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 5px;">PARAMS:</div>
-        <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; opacity: 0.8;">`;
-                                for (const [key, val] of Object.entries(intent.arguments)) {
-                                    html += `<li>${key}: ${val}</li>`;
-                                }
-                                html += `</ul>`;
-                            }
-
-                            // Add overall message if distinct from simple generic message
-                            if (data.message && !data.message.startsWith("Executed")) {
-                                html += `<div style="margin-top: 10px; border-top: 1px solid rgba(0,255,0,0.2); padding-top: 5px;">
-            ${data.message}</div>`;
-                            }
-                        }
-
-                        // 3. Display System Response (Text Immediately)
-                        renderSystemCard(html, isRefusal);
-
-                        // Audio will play via polling when ready.
-                    })
-                    .catch(err => {
-                        console.error('Error:', err);
-                        statusBar.textContent = "TRANSMISSION FAILED";
-                        statusBar.style.color = "red";
-                        renderSystemCard("Error: Failed to reach command server.", true, "SYSTEM ERROR");
-                    });
+                processCommand(transcript);
             };
 
             recognition.onerror = (event) => {
@@ -688,9 +765,10 @@
             };
 
         } else {
-            recordBtn.textContent = "VOICE UNAVAILABLE";
+            recordBtn.textContent = "VOICE SYSTEM OFFLINE";
+            recordBtn.style.opacity = "0.5";
             recordBtn.disabled = true;
-            renderSystemCard("Warning: Web Speech API not supported in this browser. Voice commands disabled.", true);
+            renderSystemCard("Warning: Voice uplink module (Speech API) incompatible. Text uplink active.", false, "SYSTEM NOTICE");
         }
     </script>
 </body>

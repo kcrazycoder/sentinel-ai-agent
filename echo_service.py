@@ -296,6 +296,8 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
         # "Satisfactory" metric for SLO (1 if <1s, 0 if >1s)
         is_satisfactory = 1 if duration < 1.0 else 0
         statsd.increment('echo_ops.latency.satisfactory', value=is_satisfactory, tags=["service:sentinel-ai"])
+        # Total count for accurate SLO denominator (Total = Satisfactory + Unsatisfactory)
+        statsd.increment('echo_ops.latency.total', tags=["service:sentinel-ai"])
 
         # Construct Feedback Message (and Audio Script)
         message = ""
