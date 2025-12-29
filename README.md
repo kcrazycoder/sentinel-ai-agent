@@ -4,7 +4,7 @@
 
 By chaining **Datadog Signals**, **Google Gemini 2.5 Flash Lite**, and **ElevenLabs**, EchoOps allows engineers to *hear* the root cause of an incident and *speak* the remediation, drastically reducing Mean Time To Resolution (MTTR).
 
-> 🏆 Built for the **AI Partner Catalyst Hackathon**.
+> 🏆 Built for the **AI Partner Catalyst Hackathon**. [Read Submission Notes](submission_notes.md)
 
 ## 🚀 Features
 
