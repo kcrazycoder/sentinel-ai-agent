@@ -7,6 +7,7 @@
 "
 - **Hosted Application URL**: [https://sentinel-ai-967479678472.us-central1.run.app/static/index.html](https://sentinel-ai-967479678472.us-central1.run.app/static/index.html)
 - **Public Repo**: [https://github.com/kcrazycoder/sentinel-ai-agent](https://github.com/kcrazycoder/sentinel-ai-agent)
+- **Live Dashboard**: [View Datadog Board](https://p.us5.datadoghq.com/sb/d462574e-d983-11f0-a543-be47cb359b84-bf1b7369aa3c5bfeaac64443e03695f9)
 - **License**: MIT (OSI Approved)
 
 ## 2. Observability Strategy

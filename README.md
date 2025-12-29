@@ -154,6 +154,7 @@ python trigger_incident.py --stop-chaos
 -   `datadog_exports/datadog_slo.json`: Import this to create the **Service Level Objectives** (Availability & Latency).
 -   `datadog_exports/*.json`: Import these to create the detection rules.
 - 'Sentinel AI Agent': Organization name on the Datadog Platform
+-   **[Live Dashboard Preview](https://p.us5.datadoghq.com/sb/d462574e-d983-11f0-a543-be47cb359b84-bf1b7369aa3c5bfeaac64443e03695f9)**: Public read-only view of the War Room.
 
 
 
