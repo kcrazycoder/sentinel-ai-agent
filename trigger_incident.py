@@ -70,11 +70,14 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Default behavior if no args provided
-    if not (args.start_chaos or args.stop_chaos):
-        # Implicitly --simulate
-        simulate_incident()
-    elif args.start_chaos:
-        start_chaos()
-    elif args.stop_chaos:
-        stop_chaos()
+    try:
+        # Default behavior if no args provided
+        if not (args.start_chaos or args.stop_chaos):
+            # Implicitly --simulate
+            simulate_incident()
+        elif args.start_chaos:
+            start_chaos()
+        elif args.stop_chaos:
+            stop_chaos()
+    except KeyboardInterrupt:
+        print("\n>> Operation cancelled by user.")

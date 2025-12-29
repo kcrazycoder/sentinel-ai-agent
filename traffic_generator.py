@@ -55,7 +55,11 @@ def run_traffic():
             print(f"{'='*50}\n")
             
             # 2s delay between commands
-            time.sleep(2)
+            try:
+                time.sleep(2)
+            except KeyboardInterrupt:
+                print("\n>> Stopping Traffic Generator.")
+                return
 
 def run_chaos_test():
     print(f"STARTING CHAOS TEST targeting {BASE_URL}...")
@@ -110,7 +114,10 @@ def run_chaos_test():
 if __name__ == "__main__":
     # check for env argument or simple toggle
     import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "--chaos":
-        run_chaos_test()
-    else:
-        run_traffic()
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == "--chaos":
+            run_chaos_test()
+        else:
+            run_traffic()
+    except KeyboardInterrupt:
+        print("\n>> Process interrupted by user.")
