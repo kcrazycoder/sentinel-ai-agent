@@ -131,8 +131,9 @@ async def datadog_webhook(payload: dict, background_tasks: BackgroundTasks):
             
             # 4. Generate Voice (Enabled)
             from voice_handler import FEMALE_VOICE_ID
-            voice_provider = os.getenv("SITREPS_VOICE_PROVIDER", "elevenlabs")
+            voice_provider = os.getenv("SITREPS_VOICE_PROVIDER", os.getenv("VOICE_PROVIDER", "elevenlabs"))
             background_tasks.add_task(generate_command_audio, sitrep_script, FEMALE_VOICE_ID, voice_provider)
+
             
             # Write Initial Status (Before audio is ready)
             import json
@@ -337,7 +338,7 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
             logger.error(f"Failed to update dashboard status: {e}")
 
         # Queue Audio Generation
-        voice_provider = os.getenv("COMMANDS_VOICE_PROVIDER", "elevenlabs")
+        voice_provider = os.getenv("COMMANDS_VOICE_PROVIDER", os.getenv("VOICE_PROVIDER", "elevenlabs"))
         background_tasks.add_task(generate_command_audio, audio_script, DEFAULT_VOICE_ID, voice_provider)
 
         # Return Immediate Response

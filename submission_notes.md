@@ -52,6 +52,6 @@ Run `python traffic_generator.py` to simulate:
 | **Actionable record inside Datadog (Incident/Case Management)** | ✅ PASS | Monitors are configured to trigger notification channels (e.g. `@webhook-EchoOps-Suspend`) which drive next steps. `manage_status` widget highlights triggered monitors. |
 | **Applications must leverage Vertex AI or Gemini** | ✅ PASS | `echo_service.py`: `ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")` |
 | **Report telemetry to Datadog (LLM signals, APM, logs)** | ✅ PASS | `echo_service.py`: Uses `ddtrace` for APM, `statsd` for custom metrics (Tokens, Cost, Refusals), and `logging` for logs. |
-| **Define at least 3 detection rules** | ✅ PASS | 5 Monitors defined in `datadog_monitors/`: Latency, Refusal, Restart, Risk, Sentiment. |
+| **Define at least 3 detection rules** | ✅ PASS | 5 Monitors defined in `datadog_exports/`: Latency, Refusal, Restart, Risk, Sentiment. |
 | **Create an actionable record... to drive next steps** | ✅ PASS | `echo_service.py` webhook handler processes alerts and generates "SitReps", acting as the automated incident record handler. |
 | **In-Datadog view showing... Actionable items status** | ✅ PASS | `datadog_export.json`: "System Detection Rules" widget sorts by status to show triggered alerts (Actionable Items). |

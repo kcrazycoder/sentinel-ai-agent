@@ -125,9 +125,9 @@ python trigger_incident.py --stop-chaos
 
 ## 📊 Datadog Artifacts
 
--   `datadog_export.json`: Import this to create the **EchoOps War Room** dashboard.
--   `datadog_slo.json`: Import this to create the **Service Level Objectives** (Availability & Latency).
--   `datadog_monitors/*.json`: Import these to create the detection rules.
+-   `datadog_exports/datadog_export.json`: Import this to create the **EchoOps War Room** dashboard.
+-   `datadog_exports/datadog_slo.json`: Import this to create the **Service Level Objectives** (Availability & Latency).
+-   `datadog_exports/*.json`: Import these to create the detection rules.
 - 'Sentinel AI Agent': Organization name on the Datadog Platform
 
 ## 📄 License
