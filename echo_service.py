@@ -26,6 +26,7 @@ from langchain_core.output_parsers import StrOutputParser
 # Import our Prompts and Handlers
 from prompts import sitrep_prompt, intent_prompt
 from voice_handler import generate_voice
+from textblob import TextBlob
 
 # Load Env
 load_dotenv()
@@ -298,7 +299,17 @@ async def process_voice_command(cmd: VoiceCommand, background_tasks: BackgroundT
         is_satisfactory = 1 if duration < 1.0 else 0
         statsd.increment('echo_ops.latency.satisfactory', value=is_satisfactory, tags=["service:sentinel-ai"])
         # Total count for accurate SLO denominator (Total = Satisfactory + Unsatisfactory)
+
         statsd.increment('echo_ops.latency.total', tags=["service:sentinel-ai"])
+
+        # Sentiment Analysis
+        try:
+            blob = TextBlob(cmd.transcript)
+            sentiment_polarity = blob.sentiment.polarity
+            statsd.gauge('ai.agent.sentiment', sentiment_polarity, tags=["service:sentinel-ai"])
+            logger.info(f"Sentiment Analysis: {sentiment_polarity} for '{cmd.transcript}'")
+        except Exception as e:
+            logger.error(f"Sentiment Analysis Failed: {e}")
 
         # Construct Feedback Message (and Audio Script)
         message = ""

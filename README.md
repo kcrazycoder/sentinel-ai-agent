@@ -13,6 +13,8 @@ By chaining **Datadog Signals**, **Google Gemini 2.5 Flash Lite**, and **ElevenL
 -   **Active Remediation**: Accepts voice commands (simulated via API) to trigger infrastructure changes.
 -   **Observability First**: Full `ddtrace` integration for every voice generation step.
 
+![EchoOps Console](assets/landing_page.png)
+
 ## 🧠 How It Works
     
 The system operates in a closed loop with Datadog:
